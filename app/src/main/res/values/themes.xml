@@ -22,4 +22,9 @@
     <style name="Theme.Jimenez_Lozano_Ruben_IMDbAPP.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
 
     <style name="Theme.Jimenez_Lozano_Ruben_IMDbAPP.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+    <!-- Base application theme. -->
+    <style name="Base.Theme.Jimenez_Lozano_Ruben_IMDbAPP" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Customize your light theme here. -->
+        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+    </style>
 </resources>
