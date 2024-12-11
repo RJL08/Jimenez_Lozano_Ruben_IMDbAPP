@@ -47,7 +47,9 @@ dependencies {
     implementation(libs.play.services.base)
     implementation(libs.firebase.auth)
     implementation(libs.activity)
+    implementation ("com.google.android.gms:play-services-auth:22.0.0")
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
+
 }
