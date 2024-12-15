@@ -3,19 +3,18 @@ package com.example.jimenez_lozano_ruben_imdbapp;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
+;
 
-import androidx.activity.EdgeToEdge;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import androidx.appcompat.widget.Toolbar;
 
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.SignInButton;
 import com.google.android.gms.common.api.ApiException;
@@ -28,39 +27,67 @@ public class SigninActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_signin);
 
-        // Configuración de márgenes para el layout principal
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
-        });
+        SignInButton signInButton = findViewById(R.id.sign_in_button);
 
-        // Inicializar GoogleSignInClient
+        // Cambiar el texto del botón
+        setGoogleSignInButtonText(signInButton, "Sign in with Google");
+
+        // Configurar el Toolbar
+        Toolbar toolbar2 = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar2);
+
+
+        // Establecer el texto para el Toolbar
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setTitle("Sign In");
+        }
+
+
+        // Configurar GoogleSignInClient
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken(getString(R.string.default_web_client_id)) // Agrega el ID del cliente
                 .requestEmail()
                 .build();
         googleSignInClient = GoogleSignIn.getClient(this, gso);
 
-        // Registrar el ActivityResultLauncher para manejar el resultado
+        // Configurar ActivityResultLauncher para manejar el resultado
         signInLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
                     if (result.getResultCode() == RESULT_OK && result.getData() != null) {
                         Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(result.getData());
                         try {
-                            // El inicio de sesión con Google fue exitoso
+                            // Inicio de sesión exitoso
                             GoogleSignInAccount account = task.getResult(ApiException.class);
                             if (account != null) {
-                                String email = account.getEmail(); // Obtén el correo del usuario
+                                // Obtener el correo electrónico del usuario
+                                String name = account.getDisplayName();
+                                String email = account.getEmail();
+
+                                // Navegar a MainActivity con los datos del usuario
+                                Intent intent = new Intent(SigninActivity.this, MainActivity.class);
+                                intent.putExtra("user_name", account.getDisplayName());
+                                intent.putExtra("user_email", account.getEmail());
+                                if (account.getPhotoUrl() != null) {
+                                    // Pasar la URL de la foto de perfil
+                                    intent.putExtra("user_photo", account.getPhotoUrl().toString());
+                                } else {
+                                    // Si no hay foto de perfil, genera la URL predeterminada
+                                    String defaultPhotoUrl = "https://lh3.googleusercontent.com/a/default-user"; // URL de Google para usuarios sin foto
+                                    intent.putExtra("user_photo", defaultPhotoUrl);
+                                }
+                                startActivity(intent);
+                                finish();
+
+                                // Mostrar mensaje de éxito y navegar a MainActivity
                                 Toast.makeText(this, "Signed in as: " + email, Toast.LENGTH_SHORT).show();
                                 Log.d("GoogleSignIn", "Correo: " + email);
+                                navegarActivityMain( account);
                             }
                         } catch (ApiException e) {
-                            // Maneja el error
+                            // Manejo de errores
                             Log.w("GoogleSignIn", "Google sign in failed", e);
                             Toast.makeText(this, "Sign-In Failed", Toast.LENGTH_SHORT).show();
                         }
@@ -70,39 +97,33 @@ public class SigninActivity extends AppCompatActivity {
                     }
                 });
 
-        // Encuentra el botón SignInButton en el diseño
-        SignInButton signInButton = findViewById(R.id.sign_in_button);
-
-        // Cambia el texto del botón a "Sign in with Google"
-        setGoogleSignInButtonText(signInButton, "Sign in with Google");
-
-        // Configura el evento onClick para el botón
-        signInButton.setOnClickListener(v -> signInWithGoogle());
+        // Configurar botón de inicio de sesión
+        findViewById(R.id.sign_in_button).setOnClickListener(v -> {
+            Intent signInIntent = googleSignInClient.getSignInIntent();
+            signInLauncher.launch(signInIntent);
+        });
     }
 
     /**
      * Cambia el texto del botón SignInButton.
-     *
-     * @param signInButton El botón SignInButton a modificar.
-     * @param buttonText   El texto personalizado que deseas mostrar.
      */
     private void setGoogleSignInButtonText(SignInButton signInButton, String buttonText) {
-        // Accede a los elementos hijos del SignInButton
         for (int i = 0; i < signInButton.getChildCount(); i++) {
-            View view = signInButton.getChildAt(i);
-            if (view instanceof TextView) {
-                // Cambia el texto del TextView interno
-                ((TextView) view).setText(buttonText);
+            if (signInButton.getChildAt(i) instanceof TextView) {
+                ((TextView) signInButton.getChildAt(i)).setText(buttonText);
                 return;
             }
         }
     }
 
     /**
-     * Inicia el flujo de inicio de sesión con Google.
+     * Navegar a MainActivity pasando el correo electrónico.
      */
-    private void signInWithGoogle() {
-        Intent signInIntent = googleSignInClient.getSignInIntent();
-        signInLauncher.launch(signInIntent); // Usa el launcher en lugar de startActivityForResult
+    private void navegarActivityMain(GoogleSignInAccount account) {
+        Intent intent = new Intent(SigninActivity.this, MainActivity.class);
+        intent.putExtra("user_name", account.getDisplayName());
+        intent.putExtra("user_email", account.getEmail());
+        startActivity(intent);
+        finish(); // Finalizar SigninActivity
     }
 }

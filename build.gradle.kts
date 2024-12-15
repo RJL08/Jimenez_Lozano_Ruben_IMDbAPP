@@ -3,3 +3,19 @@ plugins {
     alias(libs.plugins.android.application) apply false
     alias(libs.plugins.google.gms.google.services) apply false
 }
+
+buildscript {
+    repositories {
+
+    }
+    dependencies {
+        classpath("com.android.tools.build:gradle:8.0.0") // Versión de Gradle, ajusta si es necesario
+        classpath("com.google.gms:google-services:4.3.15") // Firebase/Google Services
+    }
+}
+
+allprojects {
+    repositories {
+
+    }
+}
