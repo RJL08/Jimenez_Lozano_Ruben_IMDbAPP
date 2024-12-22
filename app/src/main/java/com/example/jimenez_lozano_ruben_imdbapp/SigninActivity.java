@@ -1,6 +1,7 @@
 package com.example.jimenez_lozano_ruben_imdbapp;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.TextView;
@@ -24,6 +25,22 @@ public class SigninActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Comprobar si el usuario ya está registrado
+        SharedPreferences prefs = getSharedPreferences("MyAppPrefs", MODE_PRIVATE);
+        boolean isLoggedIn = prefs.getBoolean("isLoggedIn", false);
+
+        if (isLoggedIn) {
+            // Navegar directamente al MainActivity
+            Intent intent = new Intent(SigninActivity.this, MainActivity.class);
+            intent.putExtra("user_name", prefs.getString("userName", ""));
+            intent.putExtra("user_email", prefs.getString("userEmail", ""));
+            intent.putExtra("user_photo", prefs.getString("userPhoto", "https://lh3.googleusercontent.com/a/default-user"));
+            startActivity(intent);
+            finish();
+            return;
+        }
+
         setContentView(R.layout.activity_signin);
 
         // Configurar el Toolbar
@@ -55,17 +72,23 @@ public class SigninActivity extends AppCompatActivity {
                         try {
                             GoogleSignInAccount account = task.getResult(ApiException.class);
                             if (account != null) {
-                                // Obtener y pasar los datos del usuario
-                                String userName = account.getDisplayName();
-                                String userEmail = account.getEmail();
-                                String userPhoto = account.getPhotoUrl() != null ?
-                                        account.getPhotoUrl().toString() :
-                                        "https://lh3.googleusercontent.com/a/default-user";
+                                // Guardar estado de inicio de sesión
+                                SharedPreferences.Editor editor = getSharedPreferences("MyAppPrefs", MODE_PRIVATE).edit();
+                                editor.putBoolean("isLoggedIn", true);
+                                editor.putString("userName", account.getDisplayName());
+                                editor.putString("userEmail", account.getEmail());
+                                editor.putString("userPhoto", account.getPhotoUrl() != null
+                                        ? account.getPhotoUrl().toString()
+                                        : "https://lh3.googleusercontent.com/a/default-user");
+                                editor.apply();
 
+                                // Navegar a MainActivity
                                 Intent intent = new Intent(SigninActivity.this, MainActivity.class);
-                                intent.putExtra("user_name", userName);
-                                intent.putExtra("user_email", userEmail);
-                                intent.putExtra("user_photo", userPhoto);
+                                intent.putExtra("user_name", account.getDisplayName());
+                                intent.putExtra("user_email", account.getEmail());
+                                intent.putExtra("user_photo", account.getPhotoUrl() != null
+                                        ? account.getPhotoUrl().toString()
+                                        : "https://lh3.googleusercontent.com/a/default-user");
                                 startActivity(intent);
                                 finish();
                             }

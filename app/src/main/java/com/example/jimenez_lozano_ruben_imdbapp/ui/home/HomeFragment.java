@@ -1,6 +1,7 @@
 package com.example.jimenez_lozano_ruben_imdbapp.ui.home;
 
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -12,6 +13,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.jimenez_lozano_ruben_imdbapp.MovieDetailsActivity;
 import com.example.jimenez_lozano_ruben_imdbapp.databinding.FragmentHomeBinding;
 import com.example.jimenez_lozano_ruben_imdbapp.models.Movies;
 import com.example.jimenez_lozano_ruben_imdbapp.ui.adapter.MovieAdapter;
@@ -121,6 +123,18 @@ public class HomeFragment extends Fragment {
     }
 
     private void onMovieClick(Movies movie) {
+
+        if (movie.getId() == null || movie.getTitle() == null || movie.getImageUrl() == null) {
+            Log.e("HomeFragment", "Datos incompletos para la película: " + movie);
+            Toast.makeText(getContext(), "Error: Información incompleta de la película", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Intent intent = new Intent(getContext(), MovieDetailsActivity.class);
+        intent.putExtra("movie_id", movie.getId()); // ID de la película
+        intent.putExtra("movie_title", movie.getTitle()); // Título de la película
+        intent.putExtra("movie_image", movie.getImageUrl()); // URL de la imagen
+        startActivity(intent);
         // Lógica para ir a MovieDetailsActivity
         Toast.makeText(getContext(), "Película: " + movie.getTitle(), Toast.LENGTH_SHORT).show();
     }

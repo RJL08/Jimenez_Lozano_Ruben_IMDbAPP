@@ -1,6 +1,9 @@
 package com.example.jimenez_lozano_ruben_imdbapp.models;
 
-public class Movies {
+import android.os.Parcel;
+import android.os.Parcelable;
+
+public class Movies implements Parcelable {
     private String id; // ID de la película (tconst)
     private String title; // Título de la película
     private String imageUrl; // URL de la imagen
@@ -9,6 +12,38 @@ public class Movies {
 
     public Movies(){
 
+    }
+
+    protected Movies(Parcel in) {
+        id = in.readString();
+        title = in.readString();
+        imageUrl = in.readString();
+        releaseYear = in.readString();
+    }
+
+    public static final Creator<Movies> CREATOR = new Creator<Movies>() {
+        @Override
+        public Movies createFromParcel(Parcel in) {
+            return new Movies(in);
+        }
+
+        @Override
+        public Movies[] newArray(int size) {
+            return new Movies[size];
+        }
+    };
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(id);
+        dest.writeString(title);
+        dest.writeString(imageUrl);
+        dest.writeString(releaseYear);
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
     }
 
     // Getters y setters
