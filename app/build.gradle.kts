@@ -26,17 +26,26 @@ android {
             )
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
+
     buildFeatures {
         viewBinding = true
+    }
+
+    // Sección de packaging para excluir conflictos en META-INF/INDEX.LIST
+    packaging {
+        resources {
+            excludes += "META-INF/INDEX.LIST"
+            excludes += "META-INF/io.netty.versions.properties"
+        }
     }
 }
 
 dependencies {
-
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.constraintlayout)
@@ -47,11 +56,11 @@ dependencies {
     implementation(libs.play.services.base)
     implementation(libs.firebase.auth)
     implementation(libs.activity)
-    implementation ("com.google.android.gms:play-services-auth:20.6.0")
-    implementation ("com.github.bumptech.glide:glide:4.15.1")
-    annotationProcessor ("com.github.bumptech.glide:compiler:4.15.1")
+    implementation(libs.play.services.auth)
+    implementation(libs.glide)
+    implementation(libs.async.http.client)
+    annotationProcessor(libs.compiler)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
-
 }
