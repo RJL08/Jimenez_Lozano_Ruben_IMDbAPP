@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.jimenez_lozano_ruben_imdbapp.MovieDetailsActivity;
+import com.example.jimenez_lozano_ruben_imdbapp.database.FavoritesManager;
 import com.example.jimenez_lozano_ruben_imdbapp.databinding.FragmentHomeBinding;
 import com.example.jimenez_lozano_ruben_imdbapp.models.Movies;
 import com.example.jimenez_lozano_ruben_imdbapp.ui.adapter.MovieAdapter;
@@ -42,11 +43,13 @@ public class HomeFragment extends Fragment {
         // Configurar RecyclerView
         recyclerView = binding.recyclerViewTopMovies;
         recyclerView.setLayoutManager(new GridLayoutManager(getContext(), 2)); // Grid de 2 columnas
-        adapter = new MovieAdapter(movieList, this::onMovieClick);
+
+        // Inicializar el adaptador con la lógica de clics y clics largos
+        adapter = new MovieAdapter(movieList, this::onMovieClick, this::onMovieLongClick);
         recyclerView.setAdapter(adapter);
 
         // Llamar al API para cargar el Top 10
-       fetchTopMovies();
+        fetchTopMovies();
 
         return root;
     }
@@ -123,7 +126,6 @@ public class HomeFragment extends Fragment {
     }
 
     private void onMovieClick(Movies movie) {
-
         if (movie.getId() == null || movie.getTitle() == null || movie.getImageUrl() == null) {
             Log.e("HomeFragment", "Datos incompletos para la película: " + movie);
             Toast.makeText(getContext(), "Error: Información incompleta de la película", Toast.LENGTH_SHORT).show();
@@ -135,8 +137,32 @@ public class HomeFragment extends Fragment {
         intent.putExtra("movie_title", movie.getTitle()); // Título de la película
         intent.putExtra("movie_image", movie.getImageUrl()); // URL de la imagen
         startActivity(intent);
-        // Lógica para ir a MovieDetailsActivity
-        Toast.makeText(getContext(), "Película: " + movie.getTitle(), Toast.LENGTH_SHORT).show();
+    }
+
+    /**
+     * Lógica para manejar el evento de clic largo en una película.
+     *
+     * @param movie Película seleccionada.
+     */
+    private void onMovieLongClick(Movies movie) {
+        FavoritesManager favoritesManager = new FavoritesManager(requireContext());
+
+        // Obtener el correo del usuario actual (puedes obtenerlo de SharedPreferences o cualquier otro lugar)
+        String userEmail = "usuario@ejemplo.com"; // Reemplázalo con la lógica para obtener el email
+
+        try {
+            // Llamar a addFavorite con los parámetros correctos
+            favoritesManager.addFavorite(
+                    userEmail,                 // Correo del usuario
+                    movie.getTitle(),          // Título de la película
+                    movie.getImageUrl(),       // URL de la imagen
+                    movie.getReleaseYear()     // Fecha de lanzamiento
+            );
+
+            Toast.makeText(getContext(), "Agregada a favoritos: " + movie.getTitle(), Toast.LENGTH_SHORT).show();
+        } catch (Exception e) {
+            Toast.makeText(getContext(), "Error al agregar a favoritos: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Override
@@ -147,7 +173,6 @@ public class HomeFragment extends Fragment {
             fetchTopMovies();
         }
     }
-
 
     @Override
     public void onDestroyView() {

@@ -17,55 +17,124 @@ import com.example.jimenez_lozano_ruben_imdbapp.models.Movies;
 import java.util.List;
 public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieViewHolder> {
 
+
+    /**
+     * Lista de películas que se mostrarán en el RecyclerView.
+     */
     private List<Movies> movieList;
+
+    /**
+     * Listener para manejar los clics en cada película.
+     */
     private OnMovieClickListener listener;
 
-    public MovieAdapter(List<Movies> movieList, OnMovieClickListener listener) {
+    /**
+     * Listener para manejar los eventos de long click para agregar a favoritos.
+     */
+    private OnMovieLongClickListener longClickListener;
+
+    /**
+     * Constructor para inicializar la lista de películas y los listeners.
+     *
+     * @param movieList Lista de películas.
+     * @param listener Listener para clics normales.
+     * @param longClickListener Listener para clics largos.
+     */
+    public MovieAdapter(List<Movies> movieList, OnMovieClickListener listener, OnMovieLongClickListener longClickListener) {
         this.movieList = movieList;
         this.listener = listener;
+        this.longClickListener = longClickListener;
     }
 
     @NonNull
     @Override
     public MovieViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        // Inflar el diseño de cada elemento de la lista desde el archivo XML
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_moive, parent, false);
         return new MovieViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull MovieViewHolder holder, int position) {
+        // Obtener la película actual de la lista
         Movies movie = movieList.get(position);
-        holder.bind(movie, listener);
+        // Enlazar los datos de la película con el ViewHolder
+        holder.bind(movie, listener, longClickListener);
     }
 
     @Override
     public int getItemCount() {
+        // Devolver el tamaño de la lista de películas
         return movieList.size();
     }
 
+    /**
+     * ViewHolder para representar cada película en el RecyclerView.
+     */
     public static class MovieViewHolder extends RecyclerView.ViewHolder {
+        /**
+         * Vista para mostrar la imagen de la película.
+         */
         private ImageView movieImage;
+
+        /**
+         * Vista para mostrar el título de la película.
+         */
         private TextView movieTitle;
 
+        /**
+         * Constructor del ViewHolder para inicializar las vistas.
+         *
+         * @param itemView Vista del elemento del RecyclerView.
+         */
         public MovieViewHolder(@NonNull View itemView) {
             super(itemView);
+            // Inicializar las vistas del diseño
             movieImage = itemView.findViewById(R.id.movie_image);
             movieTitle = itemView.findViewById(R.id.movie_title);
         }
 
-        public void bind(Movies movie, OnMovieClickListener listener) {
+        /**
+         * Método para enlazar los datos de la película y los listeners a las vistas.
+         *
+         * @param movie Película a mostrar.
+         * @param listener Listener para clics normales.
+         * @param longClickListener Listener para clics largos.
+         */
+        public void bind(Movies movie, OnMovieClickListener listener, OnMovieLongClickListener longClickListener) {
+            // Establecer el título de la película
             movieTitle.setText(movie.getTitle());
+
+            // Cargar la imagen de la película usando Glide
             Glide.with(itemView.getContext())
                     .load(movie.getImageUrl())
                     .placeholder(R.drawable.esperando)
                     .into(movieImage);
 
+            // Configurar el listener para clics normales
             itemView.setOnClickListener(v -> listener.onMovieClick(movie));
+
+            // Configurar el listener para clics largos
+            itemView.setOnLongClickListener(v -> {
+                longClickListener.onMovieLongClick(movie);
+                return true; // Indicar que el evento fue manejado
+            });
         }
     }
 
+    /**
+     * Interfaz para manejar clics en una película.
+     */
     public interface OnMovieClickListener {
         void onMovieClick(Movies movie);
     }
+
+    /**
+     * Interfaz para manejar clics largos en una película.
+     */
+    public interface OnMovieLongClickListener {
+        void onMovieLongClick(Movies movie);
+    }
+
 
 }
