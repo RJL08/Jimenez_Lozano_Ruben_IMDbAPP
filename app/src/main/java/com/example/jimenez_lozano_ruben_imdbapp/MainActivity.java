@@ -1,6 +1,7 @@
 package com.example.jimenez_lozano_ruben_imdbapp;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -90,13 +91,19 @@ public class MainActivity extends AppCompatActivity {
         }
         // Configurar el botón de logout
         logoutButton.setOnClickListener(v -> {
+            // Limpiar el estado de inicio de sesión en SharedPreferences
+            SharedPreferences.Editor editor = getSharedPreferences("MyAppPrefs", MODE_PRIVATE).edit();
+            editor.clear(); // Elimina todas las preferencias
+            editor.apply(); // Confirma los cambios
+
             // Cerrar sesión con Google
             GoogleSignIn.getClient(this, GoogleSignInOptions.DEFAULT_SIGN_IN).signOut()
                     .addOnCompleteListener(task -> {
                         // Regresar a SigninActivity
                         Intent signOutIntent = new Intent(MainActivity.this, SigninActivity.class);
+                        signOutIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK); // Limpia la pila de actividades
                         startActivity(signOutIntent);
-                        finish(); // Finalizar MainActivity
+                        finish(); // Finaliza MainActivity
                     });
         });
 

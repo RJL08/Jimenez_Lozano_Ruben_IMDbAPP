@@ -2,6 +2,8 @@ package com.example.jimenez_lozano_ruben_imdbapp.ui.home;
 
 
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -23,7 +25,7 @@ import org.asynchttpclient.DefaultAsyncHttpClient;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
+import android.content.Context;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -147,21 +149,38 @@ public class HomeFragment extends Fragment {
     private void onMovieLongClick(Movies movie) {
         FavoritesManager favoritesManager = new FavoritesManager(requireContext());
 
-        // Obtener el correo del usuario actual (puedes obtenerlo de SharedPreferences o cualquier otro lugar)
-        String userEmail = "usuario@ejemplo.com"; // Reemplázalo con la lógica para obtener el email
+        // Obtener el correo del usuario actual desde SharedPreferences
+        SharedPreferences prefs = requireContext().getSharedPreferences("MyAppPrefs", Context.MODE_PRIVATE);
+        String userEmail = prefs.getString("userEmail", ""); // Reemplaza con la lógica para obtener el email
 
-        try {
-            // Llamar a addFavorite con los parámetros correctos
-            favoritesManager.addFavorite(
-                    userEmail,                 // Correo del usuario
-                    movie.getTitle(),          // Título de la película
-                    movie.getImageUrl(),       // URL de la imagen
-                    movie.getReleaseYear()     // Fecha de lanzamiento
-            );
+        if (userEmail.isEmpty()) {
+            Toast.makeText(getContext(), "Error: Usuario no identificado", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
+        // Verificar si la película ya está en favoritos para evitar duplicados
+        Cursor cursor = favoritesManager.getFavoritesCursor(userEmail);
+        List<Movies> existingFavorites = favoritesManager.getFavoritesList(cursor);
+
+        for (Movies existingMovie : existingFavorites) {
+            if (existingMovie.getTitle().equals(movie.getTitle())) {
+                Toast.makeText(getContext(), "Esta película ya está en favoritos", Toast.LENGTH_SHORT).show();
+                return;
+            }
+        }
+
+        // Añadir la película a favoritos
+        boolean isAdded = favoritesManager.addFavorite(
+                userEmail,
+                movie.getTitle(),
+                movie.getImageUrl(),
+                movie.getReleaseYear()
+        );
+
+        if (isAdded) {
             Toast.makeText(getContext(), "Agregada a favoritos: " + movie.getTitle(), Toast.LENGTH_SHORT).show();
-        } catch (Exception e) {
-            Toast.makeText(getContext(), "Error al agregar a favoritos: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(getContext(), "Error al agregar a favoritos", Toast.LENGTH_SHORT).show();
         }
     }
 

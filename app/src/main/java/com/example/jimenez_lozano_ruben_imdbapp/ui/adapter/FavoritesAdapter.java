@@ -1,6 +1,7 @@
 package com.example.jimenez_lozano_ruben_imdbapp.ui.adapter;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,6 +17,7 @@ import com.bumptech.glide.Glide;
 import com.example.jimenez_lozano_ruben_imdbapp.R;
 import com.example.jimenez_lozano_ruben_imdbapp.database.FavoritesManager;
 import com.example.jimenez_lozano_ruben_imdbapp.models.Movies;
+import com.example.jimenez_lozano_ruben_imdbapp.ui.gallery.GalleryFragment;
 
 import java.util.List;
 
@@ -23,10 +25,12 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
 
     private List<Movies> favoriteList;
     private Context context;
+    private GalleryFragment galleryFragment; // Referencia al fragmento
 
-    public FavoritesAdapter(Context context, List<Movies> favoriteList) {
+    public FavoritesAdapter(Context context, List<Movies> favoriteList, GalleryFragment galleryFragment) {
         this.context = context;
         this.favoriteList = favoriteList;
+        this.galleryFragment = galleryFragment; // Asignar el fragmento correctamente
     }
 
     @NonNull
@@ -40,16 +44,28 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
     public void onBindViewHolder(@NonNull FavoriteViewHolder holder, int position) {
         Movies movie = favoriteList.get(position);
 
+        // Vincular datos de la película al ViewHolder
         holder.bind(movie);
 
-        // Manejar clic largo para eliminar favoritos
+        // Manejar clic largo para agregar a favoritos
+        holder.itemView.setOnLongClickListener(v -> {
+            if (galleryFragment != null) {
+                galleryFragment.onMovieLongClick(movie); // Llama a onMovieLongClick en el Fragment
+            } else {
+                Toast.makeText(context, "Error: Fragmento no encontrado", Toast.LENGTH_SHORT).show();
+            }
+            return true; // Indicar que se manejó el clic largo
+        });
+
+        // Manejar clic largo para eliminar de favoritos
         holder.itemView.setOnLongClickListener(v -> {
             AlertDialog.Builder builder = new AlertDialog.Builder(holder.itemView.getContext());
             builder.setTitle("Eliminar de Favoritos");
             builder.setMessage("¿Estás seguro de que quieres eliminar " + movie.getTitle() + " de favoritos?");
             builder.setPositiveButton("Sí", (dialog, which) -> {
                 FavoritesManager favoritesManager = new FavoritesManager(holder.itemView.getContext());
-                String userEmail = "usuario@ejemplo.com"; // Reemplázalo por el correo del usuario logueado.
+                SharedPreferences prefs = holder.itemView.getContext().getSharedPreferences("MyAppPrefs", Context.MODE_PRIVATE);
+                String userEmail = prefs.getString("userEmail", ""); // Obtener el correo del usuario actual
 
                 boolean isRemoved = favoritesManager.removeFavorite(userEmail, movie.getTitle());
                 if (isRemoved) {

@@ -21,7 +21,7 @@ public class FavoritesManager {
     public boolean addFavorite(String userEmail, String movieTitle, String movieImage, String releaseDate) {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         ContentValues values = new ContentValues();
-        values.put(FavoritesDatabaseHelper.COLUMN_USER_EMAIL, userEmail);
+        values.put(FavoritesDatabaseHelper.COLUMN_USER_EMAIL, userEmail); // Dinámico
         values.put(FavoritesDatabaseHelper.COLUMN_MOVIE_TITLE, movieTitle);
         values.put(FavoritesDatabaseHelper.COLUMN_MOVIE_IMAGE, movieImage);
         values.put(FavoritesDatabaseHelper.COLUMN_RELEASE_DATE, releaseDate);
@@ -29,8 +29,7 @@ public class FavoritesManager {
         long result = db.insert(FavoritesDatabaseHelper.TABLE_NAME, null, values);
         db.close();
 
-        // Retorna true si la inserción fue exitosa, false en caso contrario
-        return result != -1;
+        return result != -1; // Retorna true si la inserción fue exitosa
     }
 
     /**
@@ -54,11 +53,13 @@ public class FavoritesManager {
 
     public Cursor getFavoritesCursor(String userEmail) {
         SQLiteDatabase db = dbHelper.getReadableDatabase();
-        return db.query(FavoritesDatabaseHelper.TABLE_NAME,
+        return db.query(
+                FavoritesDatabaseHelper.TABLE_NAME,
                 null,
                 FavoritesDatabaseHelper.COLUMN_USER_EMAIL + " = ?",
                 new String[]{userEmail},
-                null, null, null);
+                null, null, null
+        );
     }
 
 
