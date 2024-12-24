@@ -1,4 +1,4 @@
-package com.example.jimenez_lozano_ruben_imdbapp.ui;
+package com.example.jimenez_lozano_ruben_imdbapp.models;
 
 import com.google.gson.annotations.SerializedName;
 

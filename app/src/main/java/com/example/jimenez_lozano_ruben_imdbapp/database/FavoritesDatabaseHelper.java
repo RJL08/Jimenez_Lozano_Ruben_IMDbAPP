@@ -7,13 +7,14 @@ import android.database.sqlite.SQLiteOpenHelper;
 
     public class FavoritesDatabaseHelper extends SQLiteOpenHelper {
         private static final String DATABASE_NAME = "favorites_db";
-        private static final int DATABASE_VERSION = 1;
+        private static final int DATABASE_VERSION = 2;
         public static final String TABLE_NAME = "favorites";
         public static final String COLUMN_ID = "id";
         public static final String COLUMN_USER_EMAIL = "user_email";
         public static final String COLUMN_MOVIE_TITLE = "movie_title";
         public static final String COLUMN_MOVIE_IMAGE = "movie_image";
         public static final String COLUMN_RELEASE_DATE = "release_date";
+        public static final String COLUMN_MOVIE_RATING = "movie_rating";
 
         public FavoritesDatabaseHelper(Context context) {
             super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -26,14 +27,17 @@ import android.database.sqlite.SQLiteOpenHelper;
                     COLUMN_USER_EMAIL + " TEXT NOT NULL, " +
                     COLUMN_MOVIE_TITLE + " TEXT NOT NULL, " +
                     COLUMN_MOVIE_IMAGE + " TEXT NOT NULL, " +
-                    COLUMN_RELEASE_DATE + " TEXT NOT NULL);";
+                    COLUMN_RELEASE_DATE + " TEXT NOT NULL," +
+                    COLUMN_MOVIE_RATING + " TEXT NOT NULL);";
             db.execSQL(createTable);
         }
 
+
         @Override
         public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-            db.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME);
-            onCreate(db);
+            if (oldVersion < 2) {
+                // Agregar la nueva columna solo si la versión anterior es menor a 2
+                db.execSQL("ALTER TABLE " + TABLE_NAME + " ADD COLUMN " + COLUMN_MOVIE_RATING + " TEXT");
+            }
         }
     }
-

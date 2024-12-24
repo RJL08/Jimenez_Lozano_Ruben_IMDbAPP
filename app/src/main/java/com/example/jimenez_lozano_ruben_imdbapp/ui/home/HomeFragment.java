@@ -16,9 +16,11 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.jimenez_lozano_ruben_imdbapp.MovieDetailsActivity;
+import com.example.jimenez_lozano_ruben_imdbapp.api.IMDBApiService;
 import com.example.jimenez_lozano_ruben_imdbapp.database.FavoritesManager;
 import com.example.jimenez_lozano_ruben_imdbapp.databinding.FragmentHomeBinding;
 import com.example.jimenez_lozano_ruben_imdbapp.models.Movies;
+import com.example.jimenez_lozano_ruben_imdbapp.models.MovieOverviewResponse;
 import com.example.jimenez_lozano_ruben_imdbapp.ui.adapter.MovieAdapter;
 import org.asynchttpclient.AsyncHttpClient;
 import org.asynchttpclient.DefaultAsyncHttpClient;
@@ -30,12 +32,17 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import retrofit2.Call;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
+
 
 public class HomeFragment extends Fragment {
     private FragmentHomeBinding binding;
     private RecyclerView recyclerView;
     private MovieAdapter adapter;
     private List<Movies> movieList = new ArrayList<>();
+    private FavoritesManager favoritesManager;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -113,6 +120,21 @@ public class HomeFragment extends Fragment {
                 movie.setImageUrl(node.getJSONObject("primaryImage").getString("url"));
                 movie.setReleaseYear(node.getJSONObject("releaseDate").getString("year"));
 
+                // Verifica si el campo rating existe antes de asignarlo
+                if (node.has("rating") && node.getJSONObject("rating").has("value")) {
+                    movie.setRating(node.getJSONObject("rating").getString("value"));
+                } else {
+                    movie.setRating("0"); // Valor por defecto solo si no hay rating
+                }
+
+                // Verifica si el campo overview existe antes de asignarlo
+                if (node.has("overview") && !node.isNull("overview")) {
+                    movie.setOverview(node.getString("overview"));
+                } else {
+                    movie.setOverview(""); // Valor por defecto si no hay descripción
+                }
+
+
                 tempMovieList.add(movie);
             }
 
@@ -126,6 +148,23 @@ public class HomeFragment extends Fragment {
             Log.e("JSON_ERROR", "Error al parsear JSON: " + e.getMessage());
         }
     }
+
+    private void fetchMovieOverview(Movies movie) {
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl("https://imdb-com.p.rapidapi.com/")
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+
+        IMDBApiService apiService = retrofit.create(IMDBApiService.class);
+
+        Call<MovieOverviewResponse> call = apiService.getMovieOverview(
+                movie.getId(),
+                "TU_API_KEY",
+                "imdb-com.p.rapidapi.com"
+        );
+
+    }
+
 
     private void onMovieClick(Movies movie) {
         if (movie.getId() == null || movie.getTitle() == null || movie.getImageUrl() == null) {
@@ -142,11 +181,10 @@ public class HomeFragment extends Fragment {
     }
 
     /**
-     * Lógica para manejar el evento de clic largo en una película.
-     *
-     * @param movie Película seleccionada.
+     * Método para manejar el clic largo al agregar una película a favoritos.
+     * Limita el máximo de películas en favoritos a 6.
      */
-    private void onMovieLongClick(Movies movie) {
+    public void onMovieLongClick(Movies movie) {
         FavoritesManager favoritesManager = new FavoritesManager(requireContext());
 
         // Obtener el correo del usuario actual desde SharedPreferences
@@ -158,10 +196,17 @@ public class HomeFragment extends Fragment {
             return;
         }
 
-        // Verificar si la película ya está en favoritos para evitar duplicados
+        // Cargar la lista de favoritos actual desde la base de datos
         Cursor cursor = favoritesManager.getFavoritesCursor(userEmail);
         List<Movies> existingFavorites = favoritesManager.getFavoritesList(cursor);
 
+        // Verificar si se ha alcanzado el límite de películas (por ejemplo, 6)
+        if (existingFavorites.size() >= 6) {
+            Toast.makeText(getContext(), "No puedes añadir más de 6 películas a favoritos", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Verificar si la película ya está en favoritos
         for (Movies existingMovie : existingFavorites) {
             if (existingMovie.getTitle().equals(movie.getTitle())) {
                 Toast.makeText(getContext(), "Esta película ya está en favoritos", Toast.LENGTH_SHORT).show();
@@ -169,12 +214,18 @@ public class HomeFragment extends Fragment {
             }
         }
 
-        // Añadir la película a favoritos
+        // Asegurarse de que el rating es válido antes de añadirlo
+        if (movie.getRating() == null || movie.getRating().isEmpty()) {
+            movie.setRating("0"); // Asignar un valor predeterminado
+        }
+
+        // Agregar la película a favoritos
         boolean isAdded = favoritesManager.addFavorite(
                 userEmail,
                 movie.getTitle(),
                 movie.getImageUrl(),
-                movie.getReleaseYear()
+                movie.getReleaseYear(),
+                movie.getRating()
         );
 
         if (isAdded) {

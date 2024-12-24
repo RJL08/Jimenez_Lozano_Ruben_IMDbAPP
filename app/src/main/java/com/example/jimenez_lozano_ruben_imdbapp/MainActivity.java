@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.Menu;
 import android.view.ViewGroup;
@@ -18,6 +19,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.material.navigation.NavigationView;
 
+import androidx.annotation.NonNull;
 import androidx.navigation.NavController;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.appcompat.app.AppCompatActivity;
@@ -120,6 +122,29 @@ public class MainActivity extends AppCompatActivity {
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
         NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
         NavigationUI.setupWithNavController(navigationView, navController);
+
+        // Manejar el clic en el menú
+        navigationView.setNavigationItemSelectedListener(item -> {
+            int id = item.getItemId();
+            if (id == R.id.nav_home) {
+                // Navegar al fragmento Top 10
+                navController.navigate(R.id.nav_home);
+                drawer.closeDrawers(); // Cerrar el menú lateral
+                return true;
+            } else if (id == R.id.nav_slideshow) {
+                // Navegar al fragmento Buscar Películas
+                navController.navigate(R.id.nav_slideshow);
+                drawer.closeDrawers(); // Cerrar el menú lateral
+                return true;
+            } else if (id == R.id.nav_gallery) {
+                // Navegar al fragmento Favoritos
+                navController.navigate(R.id.nav_gallery);
+                drawer.closeDrawers(); // Cerrar el menú lateral
+                return true;
+            }
+
+            return false;
+        });
     }
 
     @Override
@@ -127,6 +152,8 @@ public class MainActivity extends AppCompatActivity {
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
     }
+
+
 
     @Override
     public boolean onSupportNavigateUp() {

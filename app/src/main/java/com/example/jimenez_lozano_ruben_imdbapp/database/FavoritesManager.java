@@ -4,6 +4,8 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.os.Handler;
+import android.os.Looper;
 
 import com.example.jimenez_lozano_ruben_imdbapp.models.Movies;
 
@@ -18,13 +20,14 @@ public class FavoritesManager {
         dbHelper = new FavoritesDatabaseHelper(context);
     }
 
-    public boolean addFavorite(String userEmail, String movieTitle, String movieImage, String releaseDate) {
+    public boolean addFavorite(String userEmail, String movieTitle, String movieImage, String releaseDate, String movieRating) {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put(FavoritesDatabaseHelper.COLUMN_USER_EMAIL, userEmail); // Dinámico
         values.put(FavoritesDatabaseHelper.COLUMN_MOVIE_TITLE, movieTitle);
         values.put(FavoritesDatabaseHelper.COLUMN_MOVIE_IMAGE, movieImage);
         values.put(FavoritesDatabaseHelper.COLUMN_RELEASE_DATE, releaseDate);
+        values.put(FavoritesDatabaseHelper.COLUMN_MOVIE_RATING, movieRating);
 
         long result = db.insert(FavoritesDatabaseHelper.TABLE_NAME, null, values);
         db.close();
@@ -51,6 +54,7 @@ public class FavoritesManager {
     }
 
 
+
     public Cursor getFavoritesCursor(String userEmail) {
         SQLiteDatabase db = dbHelper.getReadableDatabase();
         return db.query(
@@ -71,6 +75,7 @@ public class FavoritesManager {
                 movie.setTitle(cursor.getString(cursor.getColumnIndexOrThrow(FavoritesDatabaseHelper.COLUMN_MOVIE_TITLE)));
                 movie.setImageUrl(cursor.getString(cursor.getColumnIndexOrThrow(FavoritesDatabaseHelper.COLUMN_MOVIE_IMAGE)));
                 movie.setReleaseYear(cursor.getString(cursor.getColumnIndexOrThrow(FavoritesDatabaseHelper.COLUMN_RELEASE_DATE)));
+                movie.setRating(cursor.getString(cursor.getColumnIndexOrThrow(FavoritesDatabaseHelper.COLUMN_MOVIE_RATING)));
                 favoriteMovies.add(movie);
             } while (cursor.moveToNext());
             cursor.close(); // Cerrar el cursor después de usarlo

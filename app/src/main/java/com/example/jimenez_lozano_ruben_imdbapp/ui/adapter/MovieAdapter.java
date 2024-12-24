@@ -46,6 +46,17 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieViewHol
         this.longClickListener = longClickListener;
     }
 
+    /**
+     * Actualiza la lista de películas en el adaptador y notifica los cambios.
+     *
+     * @param newMovieList La nueva lista de películas a mostrar.
+     */
+    public void updateMovies(List<Movies> newMovieList) {
+        this.movieList.clear();
+        this.movieList.addAll(newMovieList);
+        notifyDataSetChanged();
+    }
+
     @NonNull
     @Override
     public MovieViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -105,6 +116,7 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieViewHol
             // Establecer el título de la película
             movieTitle.setText(movie.getTitle());
 
+
             // Cargar la imagen de la película usando Glide
             Glide.with(itemView.getContext())
                     .load(movie.getImageUrl())
@@ -135,6 +147,4 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieViewHol
     public interface OnMovieLongClickListener {
         void onMovieLongClick(Movies movie);
     }
-
-
 }

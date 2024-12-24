@@ -11,4 +11,10 @@
         android:name="com.example.jimenez_lozano_ruben_imdbapp.ui.home.HomeFragment"
         android:label="Home"
         tools:layout="@layout/fragment_home" />
+
+    <fragment
+        android:id="@+id/nav_slideshow"
+        android:name="com.example.jimenez_lozano_ruben_imdbapp.ui.slideshow.SlideshowFragment"
+        android:label="Buscar Película"
+        tools:layout="@layout/fragment_slideshow" />
 </navigation>

@@ -26,7 +26,8 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import com.bumptech.glide.Glide;
 import com.example.jimenez_lozano_ruben_imdbapp.api.IMDBApiService;
-import com.example.jimenez_lozano_ruben_imdbapp.ui.MovieOverviewResponse;
+import com.example.jimenez_lozano_ruben_imdbapp.models.Movies;
+import com.example.jimenez_lozano_ruben_imdbapp.models.MovieOverviewResponse;
 import retrofit2.Response;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -37,6 +38,7 @@ public class MovieDetailsActivity extends AppCompatActivity {
     private ImageView imageMovie;
     private TextView titleMovie, releaseDate, rating, description;
     private ActivityResultLauncher<Intent> contactPickerLauncher;
+    private Movies movies;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,7 +81,6 @@ public class MovieDetailsActivity extends AppCompatActivity {
         String movieId = intent.getStringExtra("movie_id");
         String movieTitle = intent.getStringExtra("movie_title");
         String movieImage = intent.getStringExtra("movie_image");
-
         Button btnSendSms = findViewById(R.id.btn_send_sms);
         btnSendSms.setOnClickListener(v -> checkPermissionsAndSendSms());
 
@@ -145,10 +146,13 @@ public class MovieDetailsActivity extends AppCompatActivity {
                             movie.data.title.plot.plotText.plainText :
                             "Sin descripción";
 
+
                     // Log para depuración
                     Log.d("MOVIE_DETAILS", "Release Date: " + releaseDateText);
                     Log.d("MOVIE_DETAILS", "Rating: " + ratingText);
                     Log.d("MOVIE_DETAILS", "Description: " + descriptionText);
+
+
 
                     // Actualizar la UI
                     runOnUiThread(() -> {
@@ -308,4 +312,6 @@ public class MovieDetailsActivity extends AppCompatActivity {
             Toast.makeText(this, "No se encontró una aplicación de mensajería", Toast.LENGTH_SHORT).show();
         }
     }
+
+
 }

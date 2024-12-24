@@ -1,6 +1,6 @@
 package com.example.jimenez_lozano_ruben_imdbapp.api;
 
-import com.example.jimenez_lozano_ruben_imdbapp.ui.MovieOverviewResponse;
+import com.example.jimenez_lozano_ruben_imdbapp.models.MovieOverviewResponse;
 
 import retrofit2.Call;
 import retrofit2.http.GET;
@@ -15,4 +15,5 @@ public interface IMDBApiService {
             @Header("x-rapidapi-key") String apiKey,
             @Header("x-rapidapi-host") String apiHost
     );
+
 }

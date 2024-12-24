@@ -1,29 +1,38 @@
 package com.example.jimenez_lozano_ruben_imdbapp.ui.gallery;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
+import android.widget.Button;
+
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
-import com.example.jimenez_lozano_ruben_imdbapp.database.FavoritesDatabaseHelper;
+import android.Manifest;
 import com.example.jimenez_lozano_ruben_imdbapp.database.FavoritesManager;
 import com.example.jimenez_lozano_ruben_imdbapp.databinding.FragmentGalleryBinding;
 import com.example.jimenez_lozano_ruben_imdbapp.models.Movies;
 import com.example.jimenez_lozano_ruben_imdbapp.ui.adapter.FavoritesAdapter;
-
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,6 +42,8 @@ public class GalleryFragment extends Fragment {
     private FavoritesAdapter adapter; // Adaptador personalizado
     private List<Movies> favoriteList = new ArrayList<>(); // Lista de películas favoritas
     private FavoritesManager favoritesManager; // Gestor de favoritos
+
+
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -46,7 +57,7 @@ public class GalleryFragment extends Fragment {
         // Configurar el RecyclerView
         recyclerView = binding.recyclerViewFavorites; // Asegúrate de que ID coincide con tu XML
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext())); // Lista vertical
-        adapter = new FavoritesAdapter(requireContext(), favoriteList, this); // Crear el adaptador
+        adapter = new FavoritesAdapter(requireContext(), favoriteList); // Crear el adaptador
         recyclerView.setAdapter(adapter); // Vincular el adaptador al RecyclerView
 
         // Inicializar el FavoritesManager
@@ -55,8 +66,108 @@ public class GalleryFragment extends Fragment {
         // Cargar favoritos desde la base de datos
         loadFavorites();
 
+
+        // Configurar el botón de compartir
+        Button shareButton = binding.shareButton;
+        shareButton.setOnClickListener(v -> {
+            // Solicitar permisos antes de compartir
+            requestBluetoothPermission();
+            // Compartir favoritos
+            shareFavoritesAsJSON();
+        });
+
+
+
         return root;
     }
+
+
+
+    private final ActivityResultLauncher<String[]> bluetoothPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
+                Boolean isBluetoothConnectGranted = result.getOrDefault(Manifest.permission.BLUETOOTH_CONNECT, false);
+                Boolean isLocationGranted = result.getOrDefault(Manifest.permission.ACCESS_FINE_LOCATION, false);
+
+                if (isBluetoothConnectGranted != null && isBluetoothConnectGranted &&
+                        isLocationGranted != null && isLocationGranted) {
+                    Toast.makeText(getContext(), "Permisos de Bluetooth concedidos.", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(getContext(), "Permisos de Bluetooth denegados.", Toast.LENGTH_SHORT).show();
+                    showPermissionDeniedDialog();
+                }
+            });
+
+    private void showPermissionDeniedDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+        builder.setTitle("Permisos necesarios")
+                .setMessage("Esta funcionalidad requiere acceso a Bluetooth y ubicación para compartir tus películas favoritas. Por favor, otorga los permisos desde la configuración de la aplicación.")
+                .setPositiveButton("Configurar", (dialog, which) -> {
+                    // Redirigir a la configuración de la aplicación
+                    Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                    Uri uri = Uri.fromParts("package", requireContext().getPackageName(), null);
+                    intent.setData(uri);
+                    startActivity(intent);
+                })
+                .setNegativeButton("Cancelar", (dialog, which) -> dialog.dismiss())
+                .create()
+                .show();
+    }
+
+    private void requestBluetoothPermission() {
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                if (shouldShowRequestPermissionRationale(Manifest.permission.BLUETOOTH_CONNECT) ||
+                        shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)) {
+                    // Mostrar la alerta explicando la importancia de los permisos
+                    showPermissionDeniedDialog();
+                } else {
+                    // Solicitar permisos normalmente
+                    bluetoothPermissionLauncher.launch(new String[]{
+                            Manifest.permission.BLUETOOTH_CONNECT,
+                            Manifest.permission.ACCESS_FINE_LOCATION
+                    });
+                }
+            } else {
+                Toast.makeText(getContext(), "No se requiere permiso en versiones anteriores.", Toast.LENGTH_SHORT).show();
+            }
+        }
+
+    /**
+     * Convierte la lista de favoritos a JSON y permite compartirla.
+     */
+    private void shareFavoritesAsJSON() {
+        if (favoriteList.isEmpty()) {
+            Toast.makeText(getContext(), "No hay favoritos para compartir.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        JSONArray jsonArray = new JSONArray();
+        for (Movies movie : favoriteList) {
+            try {
+                JSONObject jsonMovie = new JSONObject();
+                jsonMovie.put("title", movie.getTitle());
+                jsonMovie.put("posterUrl", movie.getImageUrl());
+                jsonMovie.put("releaseDate", movie.getReleaseYear());
+                jsonMovie.put("rating", movie.getRating());
+                jsonArray.put(jsonMovie);
+
+            } catch (JSONException e) {
+                Log.e("GalleryFragment", "Error al crear JSON: " + e.getMessage());
+            }
+        }
+
+        String jsonString = jsonArray.toString();
+
+        // Mostrar el JSON en un AlertDialog
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+        builder.setTitle("Películas Favoritas en JSON")
+                .setMessage(jsonString)
+                .setPositiveButton("Cerrar", (dialog, which) -> dialog.dismiss())
+                .create()
+                .show();
+
+    }
+
 
     /**
      * Método para cargar los favoritos desde la base de datos.
@@ -85,37 +196,7 @@ public class GalleryFragment extends Fragment {
         }
     }
 
-    /**
-     * Método para manejar el clic largo al agregar una película a favoritos.
-     * Limita el máximo de películas en favoritos a 6.
-     */
-    public void onMovieLongClick(Movies movie) {
-        // Obtener el correo del usuario actual desde SharedPreferences
-        SharedPreferences prefs = requireContext().getSharedPreferences("MyAppPrefs", Context.MODE_PRIVATE);
-        String userEmail = prefs.getString("userEmail", ""); // Obtén el correo del usuario
 
-        if (userEmail.isEmpty()) {
-            Toast.makeText(getContext(), "Error: Usuario no identificado", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        // Verificar si ya se alcanzó el límite de 6 películas
-        if (favoriteList.size() >= 6) {
-            Toast.makeText(getContext(), "No puedes añadir más de 6 películas a favoritos", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        // Añadir la película a favoritos
-        boolean isAdded = favoritesManager.addFavorite(userEmail, movie.getTitle(), movie.getImageUrl(), movie.getReleaseYear());
-
-        if (isAdded) {
-            favoriteList.add(movie); // Agregarla a la lista local
-            adapter.notifyItemInserted(favoriteList.size() - 1); // Actualizar el RecyclerView
-            Toast.makeText(getContext(), "Agregada a favoritos: " + movie.getTitle(), Toast.LENGTH_SHORT).show();
-        } else {
-            Toast.makeText(getContext(), "Error: No se pudo agregar a favoritos", Toast.LENGTH_SHORT).show();
-        }
-    }
 
     @Override
     public void onDestroyView() {
