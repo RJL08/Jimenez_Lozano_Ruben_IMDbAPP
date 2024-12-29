@@ -190,6 +190,7 @@ public class SlideshowFragment extends Fragment {
                             movie.setImageUrl(tmdbMovie.getPosterUrl());
                             movie.setReleaseYear(tmdbMovie.getReleaseDate());
                             movie.setOverview(tmdbMovie.getOverview());
+                            movie.setRating(tmdbMovie.getVoteAverage() != 0.0 ? String.format("%.1f", tmdbMovie.getVoteAverage()) : "N/A");
                             movies.add(movie);
                         }
 

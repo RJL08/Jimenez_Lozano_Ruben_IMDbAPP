@@ -78,27 +78,29 @@ public class MovieDetailsActivity extends AppCompatActivity {
 
         // Obtener datos desde el Intent
         Intent intent = getIntent();
+        movies = intent.getParcelableExtra("movie");
         String movieId = intent.getStringExtra("movie_id");
-        String movieTitle = intent.getStringExtra("movie_title");
-        String movieImage = intent.getStringExtra("movie_image");
         Button btnSendSms = findViewById(R.id.btn_send_sms);
         btnSendSms.setOnClickListener(v -> checkPermissionsAndSendSms());
 
-        // Mostrar datos iniciales (título e imagen)
-        titleMovie.setText(movieTitle != null ? movieTitle : "Título no disponible");
-        Glide.with(this)
-                .load(movieImage != null ? movieImage : R.drawable.esperando) // Imagen por defecto si no hay URL
-                .placeholder(R.drawable.esperando)
-                .error(R.drawable.esperando)
-                .into(imageMovie);
-
-        // Verificar si hay un ID de película para buscar más detalles
-        if (movieId != null) {
+        if (movies != null) {
+            // Mostrar detalles de la película obtenidos del Parcelable
+            titleMovie.setText(movies.getTitle() != null ? movies.getTitle() : "Título no disponible");
+            description.setText(movies.getOverview() != null ? movies.getOverview() : "Sin descripción");
+            releaseDate.setText("Release Date: " + (movies.getReleaseYear() != null ? movies.getReleaseYear() : "Fecha no disponible"));
+            rating.setText("Rating: " + (movies.getRating() != null ? movies.getRating() : "No hay valoraciones disponibles"));
+            Glide.with(this)
+                    .load(movies.getImageUrl() != null ? movies.getImageUrl() : R.drawable.esperando)
+                    .placeholder(R.drawable.esperando)
+                    .into(imageMovie);
+        } else if (movieId != null) {
+            // Si solo tenemos el ID, obtener los detalles desde el servicio
             fetchMovieDetails(movieId);
         } else {
             Toast.makeText(this, "Error: No se encontró información de la película", Toast.LENGTH_SHORT).show();
         }
     }
+
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {

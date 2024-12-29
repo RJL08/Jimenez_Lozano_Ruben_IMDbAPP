@@ -1,5 +1,6 @@
 package com.example.jimenez_lozano_ruben_imdbapp.ui.adapter;
 
+import android.content.Intent;
 import android.graphics.Movie;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,6 +12,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.example.jimenez_lozano_ruben_imdbapp.MovieDetailsActivity;
 import com.example.jimenez_lozano_ruben_imdbapp.R;
 import com.example.jimenez_lozano_ruben_imdbapp.models.Movies;
 
@@ -124,7 +126,11 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieViewHol
                     .into(movieImage);
 
             // Configurar el listener para clics normales
-            itemView.setOnClickListener(v -> listener.onMovieClick(movie));
+            itemView.setOnClickListener(v -> {
+                Intent intent = new Intent(itemView.getContext(), MovieDetailsActivity.class);
+                intent.putExtra("movie", movie); // Pasar la película como objeto Parcelable
+                itemView.getContext().startActivity(intent);
+            });
 
             // Configurar el listener para clics largos
             itemView.setOnLongClickListener(v -> {
