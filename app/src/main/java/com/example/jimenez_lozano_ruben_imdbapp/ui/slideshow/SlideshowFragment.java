@@ -14,8 +14,7 @@ import android.widget.Spinner;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
+
 
 import com.example.jimenez_lozano_ruben_imdbapp.MovieListActivity;
 import com.example.jimenez_lozano_ruben_imdbapp.api.TMDBApiService;

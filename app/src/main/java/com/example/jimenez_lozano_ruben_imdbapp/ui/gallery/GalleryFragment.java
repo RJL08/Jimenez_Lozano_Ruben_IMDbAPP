@@ -196,7 +196,11 @@ public class GalleryFragment extends Fragment {
         }
     }
 
-
+    @Override
+    public void onResume() {
+        super.onResume();
+        loadFavorites(); // Recargar favoritos al reanudar el fragmento
+    }
 
     @Override
     public void onDestroyView() {

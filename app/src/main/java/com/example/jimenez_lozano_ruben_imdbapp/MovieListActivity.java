@@ -3,7 +3,9 @@ package com.example.jimenez_lozano_ruben_imdbapp;
 import static android.content.Intent.getIntent;
 
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.widget.Toast;
 
@@ -11,6 +13,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.jimenez_lozano_ruben_imdbapp.database.FavoritesManager;
 import com.example.jimenez_lozano_ruben_imdbapp.models.Movies;
 import com.example.jimenez_lozano_ruben_imdbapp.ui.adapter.MovieAdapter;
 
@@ -42,20 +45,44 @@ public class MovieListActivity extends AppCompatActivity {
             moviesList = new ArrayList<>();
         }
 
-        // Configurar adaptador
+        // Inicializar FavoritesManager
+        FavoritesManager favoritesManager = new FavoritesManager(this);
+
+        // Configurar el adaptador
         movieAdapter = new MovieAdapter(
                 moviesList,
                 movie -> {
-                    // Manejar clic en una película (por ejemplo, abrir detalles)
+                    // onClick: Abrir detalles de la película
                     Intent detailIntent = new Intent(this, MovieDetailsActivity.class);
-                    detailIntent.putExtra("movie_id", movie.getId());
+                    detailIntent.putExtra("movie", movie);
                     startActivity(detailIntent);
                 },
                 movie -> {
-                    // Manejar clic largo para agregar a favoritos
-                    Toast.makeText(this, "Agregado a favoritos: " + movie.getTitle(), Toast.LENGTH_SHORT).show();
+                    // onLongClick: Agregar película a favoritos
+                    SharedPreferences prefs = getSharedPreferences("MyAppPrefs", Context.MODE_PRIVATE);
+                    String userEmail = prefs.getString("userEmail", "");
+
+                    if (userEmail.isEmpty()) {
+                        Toast.makeText(this, "Error: Usuario no identificado", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    boolean added = favoritesManager.addFavorite(
+                            userEmail,
+                            movie.getTitle(),
+                            movie.getImageUrl(),
+                            movie.getReleaseYear(),
+                            movie.getRating()
+                    );
+
+                    if (added) {
+                        Toast.makeText(this, "Película agregada a favoritos", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(this, "Error al agregar a favoritos", Toast.LENGTH_SHORT).show();
+                    }
                 }
         );
+
         moviesRecyclerView.setAdapter(movieAdapter);
     }
 }

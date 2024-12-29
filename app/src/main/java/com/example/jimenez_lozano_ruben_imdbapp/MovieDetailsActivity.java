@@ -1,5 +1,6 @@
 package com.example.jimenez_lozano_ruben_imdbapp;
 
+import android.annotation.SuppressLint;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -28,6 +29,15 @@ import com.bumptech.glide.Glide;
 import com.example.jimenez_lozano_ruben_imdbapp.api.IMDBApiService;
 import com.example.jimenez_lozano_ruben_imdbapp.models.Movies;
 import com.example.jimenez_lozano_ruben_imdbapp.models.MovieOverviewResponse;
+import com.google.gson.Gson;
+
+import org.asynchttpclient.AsyncHttpClient;
+import org.asynchttpclient.DefaultAsyncHttpClient;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
+
 import retrofit2.Response;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -40,6 +50,7 @@ public class MovieDetailsActivity extends AppCompatActivity {
     private ActivityResultLauncher<Intent> contactPickerLauncher;
     private Movies movies;
 
+    @SuppressLint("SetTextI18n")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -51,6 +62,8 @@ public class MovieDetailsActivity extends AppCompatActivity {
         releaseDate = findViewById(R.id.release_date_view);
         rating = findViewById(R.id.rating_view);
         description = findViewById(R.id.description_view);
+
+
 
         // Configurar el lanzador para elegir contacto
         contactPickerLauncher = registerForActivityResult(
@@ -77,20 +90,22 @@ public class MovieDetailsActivity extends AppCompatActivity {
         }
 
         // Obtener datos desde el Intent
-        Intent intent = getIntent();
+       Intent intent = getIntent();
         movies = intent.getParcelableExtra("movie");
         String movieId = intent.getStringExtra("movie_id");
+
+        // Botón para enviar SMS
         Button btnSendSms = findViewById(R.id.btn_send_sms);
         btnSendSms.setOnClickListener(v -> checkPermissionsAndSendSms());
 
         if (movies != null) {
             // Mostrar detalles de la película obtenidos del Parcelable
-            titleMovie.setText(movies.getTitle() != null ? movies.getTitle() : "Título no disponible");
-            description.setText(movies.getOverview() != null ? movies.getOverview() : "Sin descripción");
-            releaseDate.setText("Release Date: " + (movies.getReleaseYear() != null ? movies.getReleaseYear() : "Fecha no disponible"));
-            rating.setText("Rating: " + (movies.getRating() != null ? movies.getRating() : "No hay valoraciones disponibles"));
+            titleMovie.setText(movies.getTitle() != null && !movies.getTitle().isEmpty() ? movies.getTitle() : "Título no disponible");
+            description.setText(movies.getOverview() != null && !movies.getOverview().isEmpty() ? movies.getOverview() : "Sin descripción");
+            releaseDate.setText("Release Date: " + (movies.getReleaseYear() != null && !movies.getReleaseYear().isEmpty() ? movies.getReleaseYear() : "Fecha no disponible"));
+            rating.setText("Rating: " + (movies.getRating() != null && !movies.getRating().equals("0") ? movies.getRating() : "No hay valoraciones disponibles"));
             Glide.with(this)
-                    .load(movies.getImageUrl() != null ? movies.getImageUrl() : R.drawable.esperando)
+                    .load(movies.getImageUrl() != null && !movies.getImageUrl().isEmpty() ? movies.getImageUrl() : R.drawable.esperando)
                     .placeholder(R.drawable.esperando)
                     .into(imageMovie);
         } else if (movieId != null) {
@@ -112,67 +127,71 @@ public class MovieDetailsActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+
+    /**
+     * Método para obtener detalles de la película seleccionada.
+     * @param movieId
+     */
     private void fetchMovieDetails(String movieId) {
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("https://imdb-com.p.rapidapi.com/")
-                .addConverterFactory(GsonConverterFactory.create())
-                .build();
-
-        IMDBApiService apiService = retrofit.create(IMDBApiService.class);
-
-        Call<MovieOverviewResponse> call = apiService.getMovieOverview(
-                movieId,
-                "3ef3f2c2a3msh17da27eb24608e1p12db6bjsn62d2b74752ff",
-                "imdb-com.p.rapidapi.com"
-        );
-
-        call.enqueue(new Callback<MovieOverviewResponse>() {
-            @Override
-            public void onResponse(Call<MovieOverviewResponse> call, Response<MovieOverviewResponse> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    MovieOverviewResponse movie = response.body();
-
-                    String releaseDateText = (movie.data.title.releaseDate != null) ?
-                            movie.data.title.releaseDate.day + "/" +
-                                    movie.data.title.releaseDate.month + "/" +
-                                    movie.data.title.releaseDate.year :
-                            "Fecha no disponible";
-
-                    String ratingText = (movie.data.title.ratingsSummary != null &&
-                            movie.data.title.ratingsSummary.aggregateRating != null) ?
-                            String.valueOf(movie.data.title.ratingsSummary.aggregateRating) :
-                            "No hay valoraciones disponibles";
-
-                    String descriptionText = (movie.data.title.plot != null &&
-                            movie.data.title.plot.plotText != null) ?
-                            movie.data.title.plot.plotText.plainText :
-                            "Sin descripción";
-
-
-                    // Log para depuración
-                    Log.d("MOVIE_DETAILS", "Release Date: " + releaseDateText);
-                    Log.d("MOVIE_DETAILS", "Rating: " + ratingText);
-                    Log.d("MOVIE_DETAILS", "Description: " + descriptionText);
-
-
-
-                    // Actualizar la UI
-                    runOnUiThread(() -> {
-                        releaseDate.setText("Release Date: " + releaseDateText);
-                        rating.setText("Rating: " + ratingText);
-                        description.setText(descriptionText);
-                    });
-                } else {
-                    Log.e("API_ERROR", "Error en la respuesta: " + response.code());
+        new Thread(() -> {
+            AsyncHttpClient client = new DefaultAsyncHttpClient();
+            try {
+                String url = "https://imdb-com.p.rapidapi.com/title/get-overview?tconst=" + movieId;
+                client.prepare("GET", url)
+                        .setHeader("x-rapidapi-key", "3ef3f2c2a3msh17da27eb24608e1p12db6bjsn62d2b74752ff")
+                        .setHeader("x-rapidapi-host", "imdb-com.p.rapidapi.com")
+                        .execute()
+                        .toCompletableFuture()
+                        .thenAccept(response -> {
+                            if (response.getStatusCode() == 200) {
+                                try {
+                                    String responseBody = response.getResponseBody();
+                                    parseMovieDetails(responseBody);
+                                } catch (Exception e) {
+                                    Log.e("API_ERROR", "Error al parsear detalles: " + e.getMessage());
+                                }
+                            } else {
+                                Log.e("API_ERROR", "Error en la respuesta: " + response.getStatusCode());
+                            }
+                        })
+                        .join();
+            } catch (Exception e) {
+                Log.e("API_ERROR", "Error en la llamada: " + e.getMessage());
+            } finally {
+                try {
+                    client.close();
+                } catch (IOException e) {
+                    Log.e("API_ERROR", "Error al cerrar el cliente: " + e.getMessage());
                 }
             }
-
-            @Override
-            public void onFailure(Call<MovieOverviewResponse> call, Throwable t) {
-                Log.e("API_ERROR", "Error en la llamada: " + t.getMessage());
-            }
-        });
+        }).start();
     }
+
+
+
+    private void parseMovieDetails(String responseBody) {
+        try {
+            JSONObject json = new JSONObject(responseBody);
+
+            // Extraer campos del JSON
+            final String releaseDateText = json.optJSONObject("releaseDate") != null ?
+                    json.optJSONObject("releaseDate").optString("year", "N/A") : "N/A";
+            final String ratingText = json.optJSONObject("ratings") != null ?
+                    json.optJSONObject("ratings").optString("rating", "No disponible") : "No disponible";
+            final String descriptionText = json.optJSONObject("plot") != null ?
+                    json.optJSONObject("plot").optString("text", "Sin descripción") : "Sin descripción";
+
+            // Actualizar la UI en el hilo principal
+            runOnUiThread(() -> {
+                releaseDate.setText("Release Date: " + releaseDateText);
+                rating.setText("Rating: " + ratingText);
+                description.setText(descriptionText);
+            });
+        } catch (JSONException e) {
+            Log.e("JSON_ERROR", "Error al parsear JSON: " + e.getMessage());
+        }
+    }
+
 
     private void checkPermissionsAndSendSms() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED ||

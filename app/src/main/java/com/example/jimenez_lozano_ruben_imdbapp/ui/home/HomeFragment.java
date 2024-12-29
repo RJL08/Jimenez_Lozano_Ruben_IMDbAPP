@@ -33,6 +33,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
@@ -43,7 +45,7 @@ public class HomeFragment extends Fragment {
     private MovieAdapter adapter;
     private List<Movies> movieList = new ArrayList<>();
     private FavoritesManager favoritesManager;
-
+    private Movies movie;
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentHomeBinding.inflate(inflater, container, false);
@@ -115,25 +117,34 @@ public class HomeFragment extends Fragment {
                 JSONObject node = edges.getJSONObject(i).getJSONObject("node");
 
                 Movies movie = new Movies();
-                movie.setId(node.getString("id"));
-                movie.setTitle(node.getJSONObject("titleText").getString("text"));
-                movie.setImageUrl(node.getJSONObject("primaryImage").getString("url"));
-                movie.setReleaseYear(node.getJSONObject("releaseDate").getString("year"));
+                movie.setId(node.optString("id", "N/A"));
+                movie.setTitle(
+                        node.getJSONObject("titleText").optString("text", "Título no disponible")
+                );
+                movie.setImageUrl(
+                        node.has("primaryImage") && node.getJSONObject("primaryImage").has("url")
+                                ? node.getJSONObject("primaryImage").getString("url")
+                                : "" // URL por defecto vacía si no hay imagen
+                );
+                movie.setReleaseYear(
+                        node.has("releaseDate") && node.getJSONObject("releaseDate").has("year")
+                                ? node.getJSONObject("releaseDate").getString("year")
+                                : "Fecha no disponible"
+                );
 
                 // Verifica si el campo rating existe antes de asignarlo
                 if (node.has("rating") && node.getJSONObject("rating").has("value")) {
                     movie.setRating(node.getJSONObject("rating").getString("value"));
                 } else {
-                    movie.setRating("0"); // Valor por defecto solo si no hay rating
+                    movie.setRating("No disponible"); // Valor por defecto si no hay rating
                 }
 
                 // Verifica si el campo overview existe antes de asignarlo
                 if (node.has("overview") && !node.isNull("overview")) {
                     movie.setOverview(node.getString("overview"));
                 } else {
-                    movie.setOverview(""); // Valor por defecto si no hay descripción
+                    movie.setOverview("Descripción no disponible"); // Valor por defecto
                 }
-
 
                 tempMovieList.add(movie);
             }
@@ -149,35 +160,67 @@ public class HomeFragment extends Fragment {
         }
     }
 
-    private void fetchMovieOverview(Movies movie) {
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("https://imdb-com.p.rapidapi.com/")
-                .addConverterFactory(GsonConverterFactory.create())
-                .build();
+    /**
+     * Método para obtener detalles de la película seleccionada.
+     * @param movie
+     */
+  private void fetchMovieOverview(Movies movie) {
+      Retrofit retrofit = new Retrofit.Builder()
+              .baseUrl("https://imdb-com.p.rapidapi.com/")
+              .addConverterFactory(GsonConverterFactory.create())
+              .build();
 
-        IMDBApiService apiService = retrofit.create(IMDBApiService.class);
+      IMDBApiService apiService = retrofit.create(IMDBApiService.class);
 
-        Call<MovieOverviewResponse> call = apiService.getMovieOverview(
-                movie.getId(),
-                "TU_API_KEY",
-                "imdb-com.p.rapidapi.com"
-        );
+      Call<MovieOverviewResponse> call = apiService.getMovieOverview(
+              movie.getId(),
+              "3ef3f2c2a3msh17da27eb24608e1p12db6bjsn62d2b74752ff", // Clave API
+              "imdb-com.p.rapidapi.com"
+      );
 
-    }
+      call.enqueue(new Callback<MovieOverviewResponse>() {
+          @Override
+          public void onResponse(@NonNull Call<MovieOverviewResponse> call, @NonNull Response<MovieOverviewResponse> response) {
+              if (response.isSuccessful() && response.body() != null) {
+                  MovieOverviewResponse details = response.body();
 
+                  // Actualizar los detalles del objeto Movies
+                  movie.setOverview(details.getData().getTitle().getPlot().getPlotText().getPlainText());
+                  movie.setRating(details.getData().getTitle().getRatingsSummary().getAggregateRating() != null ?
+                          String.valueOf(details.getData().getTitle().getRatingsSummary().getAggregateRating()) :
+                          "No disponible");
+                  MovieOverviewResponse.ReleaseDate releaseDate = details.getData().getTitle().getReleaseDate();
+                  movie.setReleaseYear(releaseDate != null ?
+                          releaseDate.getDay() + "/" + releaseDate.getMonth() + "/" + releaseDate.getYear() :
+                          "Fecha no disponible");
 
+                  // Iniciar la actividad con los detalles completos
+                  Intent intent = new Intent(getContext(), MovieDetailsActivity.class);
+                  intent.putExtra("movie", movie); // Pasar el objeto actualizado
+                  startActivity(intent);
+              } else {
+                  Toast.makeText(getContext(), "No se pudieron cargar los detalles de la película", Toast.LENGTH_SHORT).show();
+              }
+          }
+
+          @Override
+          public void onFailure(@NonNull Call<MovieOverviewResponse> call, @NonNull Throwable t) {
+              Toast.makeText(getContext(), "Error al conectar con el servidor: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+          }
+      });
+            }
+
+    /**
+     * Método para manejar el clic en una película. Abre la actividad de detalles.
+     * @param movie
+     */
     private void onMovieClick(Movies movie) {
-        if (movie.getId() == null || movie.getTitle() == null || movie.getImageUrl() == null) {
-            Log.e("HomeFragment", "Datos incompletos para la película: " + movie);
-            Toast.makeText(getContext(), "Error: Información incompleta de la película", Toast.LENGTH_SHORT).show();
-            return;
+        if (movie.getId() != null) {
+            fetchMovieOverview(movie); // Llamar al método que obtiene los detalles del endpoint
+        } else {
+            Toast.makeText(getContext(), "Información incompleta para esta película", Toast.LENGTH_SHORT).show();
         }
 
-        Intent intent = new Intent(getContext(), MovieDetailsActivity.class);
-        intent.putExtra("movie_id", movie.getId()); // ID de la película
-        intent.putExtra("movie_title", movie.getTitle()); // Título de la película
-        intent.putExtra("movie_image", movie.getImageUrl()); // URL de la imagen
-        startActivity(intent);
     }
 
     /**

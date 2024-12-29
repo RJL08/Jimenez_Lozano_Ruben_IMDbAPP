@@ -115,8 +115,8 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieViewHol
          * @param longClickListener Listener para clics largos.
          */
         public void bind(Movies movie, OnMovieClickListener listener, OnMovieLongClickListener longClickListener) {
-            // Establecer el título de la película
-            movieTitle.setText(movie.getTitle());
+            // Establecer el título de la película*************
+            movieTitle.setText(movie.getTitle() != null ? movie.getTitle() : "Título no disponible");
 
 
             // Cargar la imagen de la película usando Glide
@@ -125,12 +125,13 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieViewHol
                     .placeholder(R.drawable.esperando)
                     .into(movieImage);
 
-            // Configurar el listener para clics normales
+            // Configurar el listener para clics normales************
             itemView.setOnClickListener(v -> {
-                Intent intent = new Intent(itemView.getContext(), MovieDetailsActivity.class);
-                intent.putExtra("movie", movie); // Pasar la película como objeto Parcelable
-                itemView.getContext().startActivity(intent);
+                if (listener != null) {
+                    listener.onMovieClick(movie);
+                }
             });
+
 
             // Configurar el listener para clics largos
             itemView.setOnLongClickListener(v -> {
