@@ -1,5 +1,6 @@
 package com.example.jimenez_lozano_ruben_imdbapp;
 
+import android.annotation.SuppressLint;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -40,6 +41,7 @@ public class MovieDetailsActivity extends AppCompatActivity {
     private ActivityResultLauncher<Intent> contactPickerLauncher;
     private Movies movies;
 
+    @SuppressLint("SetTextI18n")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
