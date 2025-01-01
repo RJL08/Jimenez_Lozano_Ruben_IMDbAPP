@@ -169,6 +169,9 @@ public class GalleryFragment extends Fragment {
     }
 
 
+
+
+
     /**
      * Método para cargar los favoritos desde la base de datos.
      */

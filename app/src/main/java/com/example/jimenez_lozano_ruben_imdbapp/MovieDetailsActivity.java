@@ -26,23 +26,14 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import com.bumptech.glide.Glide;
-import com.example.jimenez_lozano_ruben_imdbapp.api.IMDBApiService;
 import com.example.jimenez_lozano_ruben_imdbapp.models.Movies;
-import com.example.jimenez_lozano_ruben_imdbapp.models.MovieOverviewResponse;
-import com.google.gson.Gson;
-
 import org.asynchttpclient.AsyncHttpClient;
 import org.asynchttpclient.DefaultAsyncHttpClient;
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import java.io.IOException;
 
-import retrofit2.Response;
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Retrofit;
-import retrofit2.converter.gson.GsonConverterFactory;
+
 
 public class MovieDetailsActivity extends AppCompatActivity {
     private ImageView imageMovie;
@@ -138,7 +129,7 @@ public class MovieDetailsActivity extends AppCompatActivity {
             try {
                 String url = "https://imdb-com.p.rapidapi.com/title/get-overview?tconst=" + movieId;
                 client.prepare("GET", url)
-                        .setHeader("x-rapidapi-key", "3ef3f2c2a3msh17da27eb24608e1p12db6bjsn62d2b74752ff")
+                        .setHeader("x-rapidapi-key", "8c8a3cbdefmsh5b39dc7ade88a71p1ca1bdjsn245a12339ee4")
                         .setHeader("x-rapidapi-host", "imdb-com.p.rapidapi.com")
                         .execute()
                         .toCompletableFuture()

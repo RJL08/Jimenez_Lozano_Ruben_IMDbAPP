@@ -1,5 +1,6 @@
 package com.example.jimenez_lozano_ruben_imdbapp.ui.adapter;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteException;
@@ -23,6 +24,7 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
 
     private List<Movies> favoriteList;
     private Context context;
+    private boolean isDeleting = false; // Estado para evitar múltiples eliminaciones rápidas
 
     public FavoritesAdapter(Context context, List<Movies> favoriteList) {
         this.context = context;
@@ -72,8 +74,9 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
      * @param movie    La película a eliminar.
      */
     private void removeMovie(int position, Movies movie) {
+
         try {
-            // Validar el índice
+            // Validar el índice para ver si sigue siendo válido
             if (position < 0 || position >= favoriteList.size()) {
                 Toast.makeText(context, "Error: índice inválido", Toast.LENGTH_SHORT).show();
                 return;
@@ -84,22 +87,49 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
             SharedPreferences prefs = context.getSharedPreferences("MyAppPrefs", Context.MODE_PRIVATE);
             String userEmail = prefs.getString("userEmail", "");
 
-            // Eliminar de la base de datos
-            boolean isRemoved = favoritesManager.removeFavorite(userEmail, movie.getTitle());
-            if (isRemoved) {
-                // Eliminar de la lista local y notificar al adaptador
-                favoriteList.remove(position);
-                notifyItemRemoved(position);
-                Toast.makeText(context, movie.getTitle() + " eliminado de favoritos", Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(context, "Error al eliminar de favoritos", Toast.LENGTH_SHORT).show();
+            if (userEmail.isEmpty()) {
+                Toast.makeText(context, "Error: Usuario no identificado", Toast.LENGTH_SHORT).show();
+                return;
             }
+
+            // Evitar duplicados: Verificar si la película aún está en favoritos
+            if (!favoriteList.contains(movie)) {
+                Toast.makeText(context, "La película ya no está en favoritos.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // Eliminar de la base de datos en un hilo secundario para no bloquear la interfaz
+            new Thread(() -> {
+                boolean isRemoved = false;
+                try {
+                    isRemoved = favoritesManager.removeFavorite(userEmail, movie.getTitle());
+                } catch (SQLiteException e) {
+                    ((Activity) context).runOnUiThread(() -> {
+                        Toast.makeText(context, "Error en la base de datos: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                        Log.e("FavoritesAdapter", "SQLiteException: " + e.getMessage());
+                    });
+                }
+
+                if (isRemoved) {
+                    // Actualizar la lista en el hilo principal
+                    ((Activity) context).runOnUiThread(() -> {
+                        synchronized (favoriteList) {
+                            favoriteList.remove(position);
+                            notifyItemRemoved(position);
+                            notifyItemRangeChanged(position, favoriteList.size()); // Ajustar posiciones restantes
+                        }
+                        Toast.makeText(context, movie.getTitle() + " eliminado de favoritos", Toast.LENGTH_SHORT).show();
+                    });
+                } else {
+                    ((Activity) context).runOnUiThread(() -> {
+                        Toast.makeText(context, "Error al eliminar de favoritos", Toast.LENGTH_SHORT).show();
+                    });
+                }
+            }).start();
+
         } catch (IndexOutOfBoundsException e) {
             Toast.makeText(context, "Error: índice fuera de rango. " + e.getMessage(), Toast.LENGTH_LONG).show();
             Log.e("FavoritesAdapter", "IndexOutOfBoundsException: " + e.getMessage());
-        } catch (SQLiteException e) {
-            Toast.makeText(context, "Error en la base de datos. " + e.getMessage(), Toast.LENGTH_LONG).show();
-            Log.e("FavoritesAdapter", "SQLiteException: " + e.getMessage());
         } catch (Exception e) {
             Toast.makeText(context, "Error inesperado: " + e.getMessage(), Toast.LENGTH_LONG).show();
             Log.e("FavoritesAdapter", "Unexpected Exception: " + e.getMessage());

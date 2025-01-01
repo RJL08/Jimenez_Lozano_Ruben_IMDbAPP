@@ -6,7 +6,9 @@ import static android.content.Intent.getIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -45,8 +47,11 @@ public class MovieListActivity extends AppCompatActivity {
             moviesList = new ArrayList<>();
         }
 
-        // Inicializar FavoritesManager
+        /* Inicializar FavoritesManager
         FavoritesManager favoritesManager = new FavoritesManager(this);
+        */
+
+
 
         // Configurar el adaptador
         movieAdapter = new MovieAdapter(
@@ -54,7 +59,7 @@ public class MovieListActivity extends AppCompatActivity {
                 movie -> {
                     // onClick: Abrir detalles de la película
                     Intent detailIntent = new Intent(this, MovieDetailsActivity.class);
-                    detailIntent.putExtra("movie", movie);
+                    detailIntent.putExtra("movie", movie); // Mantiene la funcionalidad Parcelable
                     startActivity(detailIntent);
                 },
                 movie -> {
@@ -67,18 +72,49 @@ public class MovieListActivity extends AppCompatActivity {
                         return;
                     }
 
-                    boolean added = favoritesManager.addFavorite(
-                            userEmail,
-                            movie.getTitle(),
-                            movie.getImageUrl(),
-                            movie.getReleaseYear(),
-                            movie.getRating()
-                    );
+                    FavoritesManager favoritesManager = new FavoritesManager(this);
 
-                    if (added) {
-                        Toast.makeText(this, "Película agregada a favoritos", Toast.LENGTH_SHORT).show();
-                    } else {
-                        Toast.makeText(this, "Error al agregar a favoritos", Toast.LENGTH_SHORT).show();
+                    // Obtener la lista de favoritos actuales
+                    Cursor cursor = favoritesManager.getFavoritesCursor(userEmail);
+                    List<Movies> existingFavorites = favoritesManager.getFavoritesList(cursor);
+
+                    // Cerrar el cursor
+                    if (cursor != null) {
+                        cursor.close();
+                    }
+
+                    // Validar duplicados
+                    for (Movies favorite : existingFavorites) {
+                        if (favorite.getTitle().equals(movie.getTitle())) {
+                            Toast.makeText(this, "Esta película ya está en favoritos", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                    }
+
+                    // Validar límite de favoritos
+                    if (existingFavorites.size() >= 6) {
+                        Toast.makeText(this, "No puedes añadir más de 6 películas a favoritos", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    try {
+                        // Agregar a favoritos
+                        boolean added = favoritesManager.addFavorite(
+                                userEmail,
+                                movie.getTitle(),
+                                movie.getImageUrl(),
+                                movie.getReleaseYear(),
+                                movie.getRating()
+                        );
+
+                        if (added) {
+                            Toast.makeText(this, "Película agregada a favoritos", Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(this, "Error al agregar a favoritos", Toast.LENGTH_SHORT).show();
+                        }
+                    } catch (Exception e) {
+                        Toast.makeText(this, "Error inesperado: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        Log.e("MovieListActivity", "Error al agregar a favoritos", e);
                     }
                 }
         );

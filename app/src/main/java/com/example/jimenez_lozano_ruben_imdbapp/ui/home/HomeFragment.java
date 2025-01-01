@@ -46,6 +46,9 @@ public class HomeFragment extends Fragment {
     private List<Movies> movieList = new ArrayList<>();
     private FavoritesManager favoritesManager;
     private Movies movie;
+    private List<Movies> cachedMovies = new ArrayList<>();
+
+
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentHomeBinding.inflate(inflater, container, false);
@@ -72,7 +75,7 @@ public class HomeFragment extends Fragment {
             try {
                 // Realizar la solicitud
                 client.prepare("GET", "https://imdb-com.p.rapidapi.com/title/get-top-meter?topMeterTitlesType=ALL")
-                        .setHeader("x-rapidapi-key", "3ef3f2c2a3msh17da27eb24608e1p12db6bjsn62d2b74752ff")
+                        .setHeader("x-rapidapi-key", "8c8a3cbdefmsh5b39dc7ade88a71p1ca1bdjsn245a12339ee4")
                         .setHeader("x-rapidapi-host", "imdb-com.p.rapidapi.com")
                         .execute()
                         .toCompletableFuture()
@@ -174,7 +177,7 @@ public class HomeFragment extends Fragment {
 
       Call<MovieOverviewResponse> call = apiService.getMovieOverview(
               movie.getId(),
-              "3ef3f2c2a3msh17da27eb24608e1p12db6bjsn62d2b74752ff", // Clave API
+              "8c8a3cbdefmsh5b39dc7ade88a71p1ca1bdjsn245a12339ee4", // Clave API
               "imdb-com.p.rapidapi.com"
       );
 
