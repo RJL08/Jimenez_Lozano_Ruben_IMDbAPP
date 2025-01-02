@@ -24,7 +24,7 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
 
     private List<Movies> favoriteList;
     private Context context;
-    private boolean isDeleting = false; // Estado para evitar múltiples eliminaciones rápidas
+
 
     public FavoritesAdapter(Context context, List<Movies> favoriteList) {
         this.context = context;

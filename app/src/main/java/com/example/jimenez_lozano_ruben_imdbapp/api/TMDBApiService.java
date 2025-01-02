@@ -16,7 +16,7 @@ public interface TMDBApiService {
             @Query("sort_by") String sortBy,
             @Query("include_adult") boolean includeAdult,
             @Query("page") int page,
-            @Query("year") int year,
+            @Query("primary_release_year") int primaryReleaseYear,
             @Query("with_genres") String genreId
     );
 

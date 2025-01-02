@@ -145,20 +145,22 @@ public class GalleryFragment extends Fragment {
         for (Movies movie : favoriteList) {
             try {
                 JSONObject jsonMovie = new JSONObject();
-                jsonMovie.put("title", movie.getTitle());
-                jsonMovie.put("posterUrl", movie.getImageUrl());
-                jsonMovie.put("releaseDate", movie.getReleaseYear());
-                jsonMovie.put("rating", movie.getRating());
-                jsonArray.put(jsonMovie);
+                jsonMovie.put("id", movie.getId());
+                jsonMovie.put("overview", movie.getOverview() != null ? movie.getOverview() : ""); // Dejar vacío si es null
+                jsonMovie.put("posterUrl", movie.getImageUrl() != null ? movie.getImageUrl() : ""); // Dejar vacío si es null
+                jsonMovie.put("rating", movie.getRating() != null ? movie.getRating() : "0.0"); // Dejar "0.0" si es null
+                jsonMovie.put("releaseDate", movie.getReleaseYear() != null ? movie.getReleaseYear() : ""); // Dejar vacío si es null
+                jsonMovie.put("title", movie.getTitle() != null ? movie.getTitle() : "Sin título"); // Dejar "Sin título" si es null
 
+                jsonArray.put(jsonMovie);
             } catch (JSONException e) {
                 Log.e("GalleryFragment", "Error al crear JSON: " + e.getMessage());
             }
         }
 
         String jsonString = jsonArray.toString();
+        jsonString = jsonString.replace("\\/", "/");
 
-        // Mostrar el JSON en un AlertDialog
         AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
         builder.setTitle("Películas Favoritas en JSON")
                 .setMessage(jsonString)
@@ -188,6 +190,7 @@ public class GalleryFragment extends Fragment {
 
         // Cargar favoritos del usuario
         Cursor cursor = favoritesManager.getFavoritesCursor(userEmail);
+
         if (cursor != null && cursor.getCount() > 0) {
             favoriteList.clear();
             favoriteList.addAll(favoritesManager.getFavoritesList(cursor));

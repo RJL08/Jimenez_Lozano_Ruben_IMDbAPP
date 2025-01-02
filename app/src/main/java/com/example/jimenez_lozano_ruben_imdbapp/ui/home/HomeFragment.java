@@ -129,24 +129,43 @@ public class HomeFragment extends Fragment {
                                 ? node.getJSONObject("primaryImage").getString("url")
                                 : "" // URL por defecto vacía si no hay imagen
                 );
-                movie.setReleaseYear(
-                        node.has("releaseDate") && node.getJSONObject("releaseDate").has("year")
-                                ? node.getJSONObject("releaseDate").getString("year")
-                                : "Fecha no disponible"
-                );
+                // Obtener la fecha completa (día/mes/año)
+                if (node.has("releaseDate")) {
+                    JSONObject releaseDate = node.getJSONObject("releaseDate");
+                    String day = releaseDate.has("day") ? String.valueOf(releaseDate.getInt("day")) : null;
+                    String month = releaseDate.has("month") ? String.valueOf(releaseDate.getInt("month")) : null;
+                    String year = releaseDate.has("year") ? String.valueOf(releaseDate.getInt("year")) : null;
 
-                // Verifica si el campo rating existe antes de asignarlo
-                if (node.has("rating") && node.getJSONObject("rating").has("value")) {
-                    movie.setRating(node.getJSONObject("rating").getString("value"));
+                    // Concatenar solo si los valores están disponibles
+                    if (day != null && month != null && year != null) {
+                        movie.setReleaseYear(day + "/" + month + "/" + year);
+                    } else {
+                        movie.setReleaseYear(null); // Dejar null si falta algún dato
+                    }
                 } else {
-                    movie.setRating("No disponible"); // Valor por defecto si no hay rating
+                    movie.setReleaseYear(null);
                 }
 
-                // Verifica si el campo overview existe antes de asignarlo
-                if (node.has("overview") && !node.isNull("overview")) {
-                    movie.setOverview(node.getString("overview"));
+                // Verifica si el campo rating existe antes de asignarlo
+                // Obtener el rating*****
+                // Obtener el rating
+                if (node.has("ratingsSummary") && node.getJSONObject("ratingsSummary").has("aggregateRating")) {
+                    String rating = node.getJSONObject("ratingsSummary").getString("aggregateRating");
+                    movie.setRating(rating);
+                    Log.d("MovieRating", "Película: " + movie.getTitle() + ", Rating: " + rating);
                 } else {
-                    movie.setOverview("Descripción no disponible"); // Valor por defecto
+                    movie.setRating(null); // Dejar null si no hay rating
+                    Log.d("MovieRating", "Película: " + movie.getTitle() + ", Rating no disponible");
+                }
+
+                // Obtener el overview (descripción de la película)
+                if (node.has("plot") && node.getJSONObject("plot").has("plotText")) {
+                    String overview = node.getJSONObject("plot").getJSONObject("plotText").getString("plainText");
+                    movie.setOverview(overview);
+                    Log.d("MovieOverview", "Película: " + movie.getTitle() + ", Overview: " + overview);
+                } else {
+                    movie.setOverview(null); // Dejar null si no hay overview
+                    Log.d("MovieOverview", "Película: " + movie.getTitle() + ", Overview no disponible");
                 }
 
                 tempMovieList.add(movie);
@@ -197,6 +216,9 @@ public class HomeFragment extends Fragment {
                           releaseDate.getDay() + "/" + releaseDate.getMonth() + "/" + releaseDate.getYear() :
                           "Fecha no disponible");
 
+
+
+
                   // Iniciar la actividad con los detalles completos
                   Intent intent = new Intent(getContext(), MovieDetailsActivity.class);
                   intent.putExtra("movie", movie); // Pasar el objeto actualizado
@@ -226,16 +248,57 @@ public class HomeFragment extends Fragment {
 
     }
 
-    /**
-     * Método para manejar el clic largo al agregar una película a favoritos.
-     * Limita el máximo de películas en favoritos a 6.
-     */
-    public void onMovieLongClick(Movies movie) {
+    private void fetchMovieOverviewForFavorites(Movies movie) {
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl("https://imdb-com.p.rapidapi.com/")
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+
+        IMDBApiService apiService = retrofit.create(IMDBApiService.class);
+
+        Call<MovieOverviewResponse> call = apiService.getMovieOverview(
+                movie.getId(),
+                "8c8a3cbdefmsh5b39dc7ade88a71p1ca1bdjsn245a12339ee4", // Clave API
+                "imdb-com.p.rapidapi.com"
+        );
+
+        call.enqueue(new Callback<MovieOverviewResponse>() {
+            @Override
+            public void onResponse(@NonNull Call<MovieOverviewResponse> call, @NonNull Response<MovieOverviewResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    MovieOverviewResponse details = response.body();
+
+                    // Actualizar los datos de la película
+                    movie.setOverview(details.getData().getTitle().getPlot().getPlotText().getPlainText());
+                    movie.setRating(details.getData().getTitle().getRatingsSummary().getAggregateRating() != null ?
+                            String.valueOf(details.getData().getTitle().getRatingsSummary().getAggregateRating()) :
+                            "No disponible");
+                    MovieOverviewResponse.ReleaseDate releaseDate = details.getData().getTitle().getReleaseDate();
+                    movie.setReleaseYear(releaseDate != null ?
+                            releaseDate.getDay() + "/" + releaseDate.getMonth() + "/" + releaseDate.getYear() :
+                            "Fecha no disponible");
+
+                    // Agregar a favoritos
+                    addMovieToFavorites(movie);
+                } else {
+                    Toast.makeText(getContext(), "No se pudieron cargar los detalles de la película", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<MovieOverviewResponse> call, @NonNull Throwable t) {
+                Toast.makeText(getContext(), "Error al conectar con el servidor: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void addMovieToFavorites(Movies movie) {
+        // Inicializar el gestor de favoritos
         FavoritesManager favoritesManager = new FavoritesManager(requireContext());
 
         // Obtener el correo del usuario actual desde SharedPreferences
         SharedPreferences prefs = requireContext().getSharedPreferences("MyAppPrefs", Context.MODE_PRIVATE);
-        String userEmail = prefs.getString("userEmail", ""); // Reemplaza con la lógica para obtener el email
+        String userEmail = prefs.getString("userEmail", ""); // Obtiene el correo del usuario
 
         if (userEmail.isEmpty()) {
             Toast.makeText(getContext(), "Error: Usuario no identificado", Toast.LENGTH_SHORT).show();
@@ -254,30 +317,52 @@ public class HomeFragment extends Fragment {
 
         // Verificar si la película ya está en favoritos
         for (Movies existingMovie : existingFavorites) {
-            if (existingMovie.getTitle().equals(movie.getTitle())) {
+            if (existingMovie.getId().equals(movie.getId())) {
                 Toast.makeText(getContext(), "Esta película ya está en favoritos", Toast.LENGTH_SHORT).show();
                 return;
             }
         }
 
-        // Asegurarse de que el rating es válido antes de añadirlo
+        // Asegurarse de que el rating y overview no sean nulos
         if (movie.getRating() == null || movie.getRating().isEmpty()) {
-            movie.setRating("0"); // Asignar un valor predeterminado
+            movie.setRating("No disponible");
+        }
+        if (movie.getOverview() == null || movie.getOverview().isEmpty()) {
+            movie.setOverview("Descripción no disponible");
         }
 
         // Agregar la película a favoritos
         boolean isAdded = favoritesManager.addFavorite(
-                userEmail,
-                movie.getTitle(),
-                movie.getImageUrl(),
-                movie.getReleaseYear(),
-                movie.getRating()
+                movie.getId(),              // ID de la película
+                userEmail,                  // Email del usuario
+                movie.getTitle(),           // Título de la película
+                movie.getImageUrl(),        // URL de la imagen
+                movie.getReleaseYear(),     // Fecha de lanzamiento
+                movie.getRating(),          // Puntuación
+                movie.getOverview()         // Descripción de la película
         );
 
         if (isAdded) {
-            Toast.makeText(getContext(), "Agregada a favoritos: " + movie.getTitle(), Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), "Película añadida a favoritos: " + movie.getTitle(), Toast.LENGTH_SHORT).show();
         } else {
-            Toast.makeText(getContext(), "Error al agregar a favoritos", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), "Error al añadir a favoritos", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+
+
+    /**
+     * Método para manejar el clic largo al agregar una película a favoritos.
+     * Limita el máximo de películas en favoritos a 6.
+     */
+    public void onMovieLongClick(Movies movie) {
+
+        if (movie.getRating() == null || movie.getOverview() == null) {
+            // Obtener los detalles completos de la película antes de agregarla
+            fetchMovieOverviewForFavorites( movie);
+        } else {
+            // Agregar la película directamente si ya tiene todos los detalles
+            addMovieToFavorites(movie);
         }
     }
 
