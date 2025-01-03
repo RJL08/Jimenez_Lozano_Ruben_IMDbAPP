@@ -7,7 +7,12 @@ import retrofit2.Call;
 import retrofit2.http.GET;
 import retrofit2.http.Query;
 
+
+/**
+ * Interfaz que define los endpoints de la API de TMDB para realizar busquedas de peliculas y obtener generos.
+ */
 public interface TMDBApiService {
+
 
     @GET("discover/movie")
     Call<MovieSearchResponse> searchMovies(

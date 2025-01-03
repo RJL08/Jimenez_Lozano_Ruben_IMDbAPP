@@ -25,19 +25,23 @@ import com.example.jimenez_lozano_ruben_imdbapp.models.MovieSearchResponse;
 import com.example.jimenez_lozano_ruben_imdbapp.models.Movies;
 import com.example.jimenez_lozano_ruben_imdbapp.models.TMDBMovie;
 import com.example.jimenez_lozano_ruben_imdbapp.ui.adapter.MovieAdapter;
-
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
-
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
+
+/**
+ * Fragmento que permite al usuario buscar peliculas por genero y año.
+ *
+ */
 public class SlideshowFragment extends Fragment {
 
+    //Declaracion de variables
     private FragmentSlideshowBinding binding;
     private TMDBApiService apiService;
     private Spinner genreSpinner;
@@ -50,12 +54,12 @@ public class SlideshowFragment extends Fragment {
         binding = FragmentSlideshowBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
-        // Inicializar vistas
+        // Inicializamos vistas
         genreSpinner = binding.genreSpinner;
         yearEditText = binding.yearEditText;
         Button searchButton = binding.searchButton;
 
-        // Configurar Retrofit y API Service
+        // Configuramos Retrofit y API Service
         try {
             Retrofit retrofit = new Retrofit.Builder()
                     .baseUrl("https://api.themoviedb.org/3/")
@@ -66,16 +70,17 @@ public class SlideshowFragment extends Fragment {
             Toast.makeText(getContext(), "Error al inicializar la API Service", Toast.LENGTH_SHORT).show();
         }
 
-        // Limitar la entrada del año a 4 dígitos
+        // Limitamos la entrada del año a 4 digitos
         yearEditText.setFilters(new InputFilter[]{new InputFilter.LengthFilter(4)});
 
-        // Configurar acción del botón "Buscar"
+        // Configuramos acción del botón "Buscar"
         binding.searchButton.setOnClickListener(v -> {
             try {
+
                 String selectedYear = binding.yearEditText.getText().toString().trim();
                 Genre selectedGenre = (Genre) binding.genreSpinner.getSelectedItem();
 
-                // Validar que el año no esté vacío y sea mayor o igual a 1940
+                // Validamos que el año no este vacio y sea mayor o igual a 1940
                 if (selectedYear.isEmpty()) {
                     Toast.makeText(getContext(), "Por favor introduce un año", Toast.LENGTH_SHORT).show();
                     return;
@@ -89,7 +94,7 @@ public class SlideshowFragment extends Fragment {
                     return;
                 }
 
-                // Obtener el año actual
+                // Obtenemos el año actual para poder controlar que no se introduzca un año mayor al actual
                 int currentYear = Calendar.getInstance().get(Calendar.YEAR);
 
                 if (year < 1940) {
@@ -107,7 +112,7 @@ public class SlideshowFragment extends Fragment {
                     return;
                 }
 
-                // Realizar la búsqueda y mostrar resultados
+                // Realizamos la búsqueda y mostrar resultados
                 searchMovies();
 
             } catch (Exception e) {
@@ -115,7 +120,7 @@ public class SlideshowFragment extends Fragment {
             }
         });
 
-        // Cargar géneros
+        // Cargamos géneros
         try {
             loadGenres();
         } catch (Exception e) {
@@ -126,7 +131,8 @@ public class SlideshowFragment extends Fragment {
     }
 
     /**
-     * Método para cargar géneros desde la API de TMDB y poblar el Spinner.
+     * Metodo para cargar generos desde la API de TMDB y poblar el Spinner.
+     * de esta manera cargamos los generos de las peliculas en el spinner
      */
     private void loadGenres() {
         try {
@@ -134,13 +140,17 @@ public class SlideshowFragment extends Fragment {
                 @Override
                 public void onResponse(Call<GenresResponse> call, Response<GenresResponse> response) {
                     try {
+                        // Si la respuesta es exitosa y contiene datos, poblamos el Spinner
                         if (response.isSuccessful() && response.body() != null) {
+                            // Añadir géneros a el Spinner con los datos obtenidos
                             List<Genre> genres = response.body().getGenres();
+                            // Creamos un adaptador para el Spinner con los generos
                             ArrayAdapter<Genre> adapter = new ArrayAdapter<>(
                                     getContext(),
                                     android.R.layout.simple_spinner_item,
                                     genres
                             );
+                            // Establecemos el diseño de la lista desplegable
                             adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
                             genreSpinner.setAdapter(adapter);
                         } else {
@@ -162,7 +172,8 @@ public class SlideshowFragment extends Fragment {
     }
 
     /**
-     * Método para buscar películas basadas en género y año.
+     * Metodo para buscar películas basadas en genero y año,
+     * a traves de la llamada a la api de TMDB
      */
     private void searchMovies() {
         try {
@@ -193,7 +204,7 @@ public class SlideshowFragment extends Fragment {
                             movies.add(movie);
                         }
 
-                        // Enviar los resultados a MovieListActivity
+                        // Enviamos los resultados a MovieListActivity po medio del intent
                         Intent intent = new Intent(getContext(), MovieListActivity.class);
                         intent.putParcelableArrayListExtra("movies_list", movies);
                         startActivity(intent);
@@ -215,6 +226,7 @@ public class SlideshowFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        // Limpiamos el binding para evitar fugas de memoria al destruir el fragmento
         binding = null;
     }
 }

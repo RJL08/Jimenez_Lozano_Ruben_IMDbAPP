@@ -55,6 +55,7 @@ dependencies {
     implementation(libs.navigation.ui)
     implementation(libs.play.services.base)
     implementation(libs.firebase.auth)
+    implementation (libs.play.services.auth)
     implementation(libs.activity)
     implementation(libs.play.services.auth)
     implementation(libs.glide)

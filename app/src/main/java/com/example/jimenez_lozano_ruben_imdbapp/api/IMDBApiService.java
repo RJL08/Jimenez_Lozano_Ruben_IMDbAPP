@@ -7,7 +7,11 @@ import retrofit2.http.GET;
 import retrofit2.http.Header;
 import retrofit2.http.Query;
 
+/**
+ * Interfaz que define los endpoints de la API de IMDB para obtener detalles de una pelicula especifica.
+ */
 public interface IMDBApiService {
+
 
     @GET("title/get-overview")
     Call<MovieOverviewResponse> getMovieOverview(

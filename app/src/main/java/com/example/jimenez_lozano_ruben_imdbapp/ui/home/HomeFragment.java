@@ -31,7 +31,6 @@ import android.content.Context;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -39,14 +38,19 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 
+
+/**
+ * fragmento principal que muestra el top 10 de películas populares
+ * y permite al usuario interactuar con ellas, incluyendo añadirlas a favoritos.
+ */
 public class HomeFragment extends Fragment {
+
+    //Declaramos las varibales
     private FragmentHomeBinding binding;
     private RecyclerView recyclerView;
     private MovieAdapter adapter;
     private List<Movies> movieList = new ArrayList<>();
-    private FavoritesManager favoritesManager;
-    private Movies movie;
-    private List<Movies> cachedMovies = new ArrayList<>();
+
 
 
     @Override
@@ -54,26 +58,29 @@ public class HomeFragment extends Fragment {
         binding = FragmentHomeBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
-        // Configurar RecyclerView
+        // configuramos el recyclerview con un diseño de cuadricula
         recyclerView = binding.recyclerViewTopMovies;
         recyclerView.setLayoutManager(new GridLayoutManager(getContext(), 2)); // Grid de 2 columnas
 
-        // Inicializar el adaptador con la lógica de clics y clics largos
+        // Inicializamos el adaptador con la logica de clic corto y clic largo
         adapter = new MovieAdapter(movieList, this::onMovieClick, this::onMovieLongClick);
         recyclerView.setAdapter(adapter);
 
-        // Llamar al API para cargar el Top 10
+        // Llamamos al metodo que realiza la solicitud al API para cargar el Top 10
         fetchTopMovies();
-
+        // Devolvemos la vista
         return root;
     }
 
+    /**
+     * Método para realizar la solicitud al API para cargar el Top 10 de peliculas.
+     */
     private void fetchTopMovies() {
-        // Crear un nuevo hilo para la solicitud
+        // Creamos un nuevo hilo para la solicitud y asi evitar bloquear el hilo principal
         new Thread(() -> {
             AsyncHttpClient client = new DefaultAsyncHttpClient();
             try {
-                // Realizar la solicitud
+                // Realizamos la solicitud a la API
                 client.prepare("GET", "https://imdb-com.p.rapidapi.com/title/get-top-meter?topMeterTitlesType=ALL")
                         .setHeader("x-rapidapi-key", "8c8a3cbdefmsh5b39dc7ade88a71p1ca1bdjsn245a12339ee4")
                         .setHeader("x-rapidapi-host", "imdb-com.p.rapidapi.com")
@@ -82,7 +89,7 @@ public class HomeFragment extends Fragment {
                         .thenAccept(response -> {
                             if (response.getStatusCode() == 200) {
                                 try {
-                                    // Parsear la respuesta JSON
+                                    // Parseamos la respuesta del JSON
                                     String responseBody = response.getResponseBody();
                                     parseTopMovies(responseBody);
                                 } catch (Exception e) {
@@ -105,21 +112,28 @@ public class HomeFragment extends Fragment {
         }).start();
     }
 
+    /**
+     * parseamos los detalles del top 10 de peliculas desde la respuesta del api.
+     * @param responseBody respuesta json del api
+     */
     private void parseTopMovies(String responseBody) {
         try {
-            // Parsear JSON
+            // Parseamos el  JSON
             JSONObject jsonResponse = new JSONObject(responseBody);
             JSONArray edges = jsonResponse.getJSONObject("data")
                     .getJSONObject("topMeterTitles")
                     .getJSONArray("edges");
 
-            // Crear lista de películas
+            // Creamos una lista de películas
             List<Movies> tempMovieList = new ArrayList<>();
+            // limitamos el numero de peliculas a 10
             int maxResults = Math.min(edges.length(), 10);
+            // Recorremos los resultados y creamos objetos de peliculas
             for (int i = 0; i < maxResults; i++) {
                 JSONObject node = edges.getJSONObject(i).getJSONObject("node");
 
                 Movies movie = new Movies();
+                // Asignamos los valores a los atributos de la pelicula
                 movie.setId(node.optString("id", "N/A"));
                 movie.setTitle(
                         node.getJSONObject("titleText").optString("text", "Título no disponible")
@@ -129,53 +143,56 @@ public class HomeFragment extends Fragment {
                                 ? node.getJSONObject("primaryImage").getString("url")
                                 : "" // URL por defecto vacía si no hay imagen
                 );
-                // Obtener la fecha completa (día/mes/año)
+                // Obtenemos la fecha completa (día/mes/año)
                 if (node.has("releaseDate")) {
                     JSONObject releaseDate = node.getJSONObject("releaseDate");
                     String day = releaseDate.has("day") ? String.valueOf(releaseDate.getInt("day")) : null;
                     String month = releaseDate.has("month") ? String.valueOf(releaseDate.getInt("month")) : null;
                     String year = releaseDate.has("year") ? String.valueOf(releaseDate.getInt("year")) : null;
 
-                    // Concatenar solo si los valores están disponibles
+                    // Concatenamos solo si los valores estan disponibles
                     if (day != null && month != null && year != null) {
                         movie.setReleaseYear(day + "/" + month + "/" + year);
                     } else {
-                        movie.setReleaseYear(null); // Dejar null si falta algún dato
+                        // Dejamos null si falta algún dato
+                        movie.setReleaseYear(null);
                     }
                 } else {
                     movie.setReleaseYear(null);
                 }
 
-                // Verifica si el campo rating existe antes de asignarlo
-                // Obtener el rating*****
-                // Obtener el rating
+                // Verificamos si el campo rating existe antes de asignarlo
+
                 if (node.has("ratingsSummary") && node.getJSONObject("ratingsSummary").has("aggregateRating")) {
                     String rating = node.getJSONObject("ratingsSummary").getString("aggregateRating");
                     movie.setRating(rating);
                     Log.d("MovieRating", "Película: " + movie.getTitle() + ", Rating: " + rating);
                 } else {
-                    movie.setRating(null); // Dejar null si no hay rating
+                    // Dejamos null si no hay rating
+                    movie.setRating(null);
                     Log.d("MovieRating", "Película: " + movie.getTitle() + ", Rating no disponible");
                 }
 
-                // Obtener el overview (descripción de la película)
+                // Obtenemos el overview (descripción de la pelicula)
                 if (node.has("plot") && node.getJSONObject("plot").has("plotText")) {
                     String overview = node.getJSONObject("plot").getJSONObject("plotText").getString("plainText");
                     movie.setOverview(overview);
                     Log.d("MovieOverview", "Película: " + movie.getTitle() + ", Overview: " + overview);
                 } else {
-                    movie.setOverview(null); // Dejar null si no hay overview
+                    // Dejamos null si no hay overview
+                    movie.setOverview(null);
                     Log.d("MovieOverview", "Película: " + movie.getTitle() + ", Overview no disponible");
                 }
-
+                // Agregamos la pelicula a la lista
                 tempMovieList.add(movie);
             }
 
-            // Actualizar la lista en el hilo principal
+            // Actualizamos la lista en el hilo principal
             requireActivity().runOnUiThread(() -> {
                 movieList.clear();
                 movieList.addAll(tempMovieList);
-                adapter.notifyDataSetChanged(); // Notificar cambios al RecyclerView
+                // Notificamos los  cambios al RecyclerView
+                adapter.notifyDataSetChanged();
             });
         } catch (JSONException e) {
             Log.e("JSON_ERROR", "Error al parsear JSON: " + e.getMessage());
@@ -183,10 +200,11 @@ public class HomeFragment extends Fragment {
     }
 
     /**
-     * Método para obtener detalles de la película seleccionada.
-     * @param movie
+     * Metodo para obtener detalles de la película seleccionada.
+     * @param movie pelicula seleccionada
      */
   private void fetchMovieOverview(Movies movie) {
+
       Retrofit retrofit = new Retrofit.Builder()
               .baseUrl("https://imdb-com.p.rapidapi.com/")
               .addConverterFactory(GsonConverterFactory.create())
@@ -206,7 +224,7 @@ public class HomeFragment extends Fragment {
               if (response.isSuccessful() && response.body() != null) {
                   MovieOverviewResponse details = response.body();
 
-                  // Actualizar los detalles del objeto Movies
+                  // Actualizamos los detalles del objeto Movies
                   movie.setOverview(details.getData().getTitle().getPlot().getPlotText().getPlainText());
                   movie.setRating(details.getData().getTitle().getRatingsSummary().getAggregateRating() != null ?
                           String.valueOf(details.getData().getTitle().getRatingsSummary().getAggregateRating()) :
@@ -217,9 +235,7 @@ public class HomeFragment extends Fragment {
                           "Fecha no disponible");
 
 
-
-
-                  // Iniciar la actividad con los detalles completos
+                  // Iniciamos la actividad con los detalles completos de la pelicula
                   Intent intent = new Intent(getContext(), MovieDetailsActivity.class);
                   intent.putExtra("movie", movie); // Pasar el objeto actualizado
                   startActivity(intent);
@@ -236,18 +252,23 @@ public class HomeFragment extends Fragment {
             }
 
     /**
-     * Método para manejar el clic en una película. Abre la actividad de detalles.
-     * @param movie
+     * Metodo para manejar el clic en una pelicula. Abre la actividad de detalles.
+     * @param movie  película seleccionada
      */
     private void onMovieClick(Movies movie) {
         if (movie.getId() != null) {
-            fetchMovieOverview(movie); // Llamar al método que obtiene los detalles del endpoint
+            // Llamar al metodo que obtiene los detalles del endpoint
+            fetchMovieOverview(movie);
         } else {
             Toast.makeText(getContext(), "Información incompleta para esta película", Toast.LENGTH_SHORT).show();
         }
 
     }
 
+    /**
+     * obtenemos los detalles completos de una pelicula antes de agregarla a favoritos.
+     * @param movie pelicula seleccionada
+     */
     private void fetchMovieOverviewForFavorites(Movies movie) {
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl("https://imdb-com.p.rapidapi.com/")
@@ -268,7 +289,7 @@ public class HomeFragment extends Fragment {
                 if (response.isSuccessful() && response.body() != null) {
                     MovieOverviewResponse details = response.body();
 
-                    // Actualizar los datos de la película
+                    // Actualizamos los datos de la pelcula
                     movie.setOverview(details.getData().getTitle().getPlot().getPlotText().getPlainText());
                     movie.setRating(details.getData().getTitle().getRatingsSummary().getAggregateRating() != null ?
                             String.valueOf(details.getData().getTitle().getRatingsSummary().getAggregateRating()) :
@@ -278,7 +299,7 @@ public class HomeFragment extends Fragment {
                             releaseDate.getDay() + "/" + releaseDate.getMonth() + "/" + releaseDate.getYear() :
                             "Fecha no disponible");
 
-                    // Agregar a favoritos
+                    // Agregamos la pelicula a favoritos
                     addMovieToFavorites(movie);
                 } else {
                     Toast.makeText(getContext(), "No se pudieron cargar los detalles de la película", Toast.LENGTH_SHORT).show();
@@ -292,11 +313,15 @@ public class HomeFragment extends Fragment {
         });
     }
 
+    /**
+     * agregamos una pelicula a la lista de favoritos.
+     * @param movie pelicula seleccionada
+     */
     private void addMovieToFavorites(Movies movie) {
-        // Inicializar el gestor de favoritos
+        // Inicializamos el gestor de favoritos
         FavoritesManager favoritesManager = new FavoritesManager(requireContext());
 
-        // Obtener el correo del usuario actual desde SharedPreferences
+        // Obtenemos el correo del usuario actual desde SharedPreferences y lo validamos
         SharedPreferences prefs = requireContext().getSharedPreferences("MyAppPrefs", Context.MODE_PRIVATE);
         String userEmail = prefs.getString("userEmail", ""); // Obtiene el correo del usuario
 
@@ -305,17 +330,18 @@ public class HomeFragment extends Fragment {
             return;
         }
 
-        // Cargar la lista de favoritos actual desde la base de datos
+        // Cargamos la lista de favoritos actual desde la base de datos
         Cursor cursor = favoritesManager.getFavoritesCursor(userEmail);
+        // Obtenemos la lista de peliculas desde el cursor
         List<Movies> existingFavorites = favoritesManager.getFavoritesList(cursor);
 
-        // Verificar si se ha alcanzado el límite de películas (por ejemplo, 6)
+        // Verificamos si se ha alcanzado el límite de peliculas
         if (existingFavorites.size() >= 6) {
             Toast.makeText(getContext(), "No puedes añadir más de 6 películas a favoritos", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // Verificar si la película ya está en favoritos
+        // Verificamos si la pelicula ya esta en favoritos y evitar duplicidades
         for (Movies existingMovie : existingFavorites) {
             if (existingMovie.getId().equals(movie.getId())) {
                 Toast.makeText(getContext(), "Esta película ya está en favoritos", Toast.LENGTH_SHORT).show();
@@ -323,7 +349,7 @@ public class HomeFragment extends Fragment {
             }
         }
 
-        // Asegurarse de que el rating y overview no sean nulos
+        // Nos aseguramos  que el rating y overview no sean nulos
         if (movie.getRating() == null || movie.getRating().isEmpty()) {
             movie.setRating("No disponible");
         }
@@ -331,15 +357,15 @@ public class HomeFragment extends Fragment {
             movie.setOverview("Descripción no disponible");
         }
 
-        // Agregar la película a favoritos
+        // Agregamos la pelicula a favoritos
         boolean isAdded = favoritesManager.addFavorite(
-                movie.getId(),              // ID de la película
+                movie.getId(),              // ID de la pelicula
                 userEmail,                  // Email del usuario
-                movie.getTitle(),           // Título de la película
+                movie.getTitle(),           // Titulo de la pelicula
                 movie.getImageUrl(),        // URL de la imagen
                 movie.getReleaseYear(),     // Fecha de lanzamiento
                 movie.getRating(),          // Puntuación
-                movie.getOverview()         // Descripción de la película
+                movie.getOverview()         // Descripcion de la pelicula
         );
 
         if (isAdded) {
@@ -352,16 +378,15 @@ public class HomeFragment extends Fragment {
 
 
     /**
-     * Método para manejar el clic largo al agregar una película a favoritos.
-     * Limita el máximo de películas en favoritos a 6.
+     * Metodo para manejar el clic largo al agregar una pelicula a favoritos.
      */
     public void onMovieLongClick(Movies movie) {
 
         if (movie.getRating() == null || movie.getOverview() == null) {
-            // Obtener los detalles completos de la película antes de agregarla
+            // Obtenemos los detalles completos de la pelicula antes de agregarla
             fetchMovieOverviewForFavorites( movie);
         } else {
-            // Agregar la película directamente si ya tiene todos los detalles
+            // Agregar la pelicula directamente si ya tiene todos los detalles
             addMovieToFavorites(movie);
         }
     }
@@ -369,8 +394,8 @@ public class HomeFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-
-        if (movieList.isEmpty()) { // Evitar cargar datos si ya están cargados
+        // Evitamos cargar datos si ya estan cargados
+        if (movieList.isEmpty()) {
             fetchTopMovies();
         }
     }
@@ -378,6 +403,7 @@ public class HomeFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        // Limpiamos la referencia al binding para evitar fugas de memoria
         binding = null;
     }
 }

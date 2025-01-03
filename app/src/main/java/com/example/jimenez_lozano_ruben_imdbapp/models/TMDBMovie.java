@@ -2,6 +2,10 @@ package com.example.jimenez_lozano_ruben_imdbapp.models;
 
 import com.google.gson.annotations.SerializedName;
 
+/**
+ * Clase que representa una película obtenida de TMDB.
+ * Esta clase se utiliza para poder mapear los datos recibidos desde la API de TMDB.
+ */
 public class TMDBMovie {
     @SerializedName("id")
     private int id;
@@ -70,7 +74,7 @@ public class TMDBMovie {
         this.voteAverage = voteAverage;
     }
 
-    // Método para obtener la URL completa del póster
+    // Metodo para obtener la URL completa del póster
     public String getPosterUrl() {
         return "https://image.tmdb.org/t/p/w500" + posterPath;
     }

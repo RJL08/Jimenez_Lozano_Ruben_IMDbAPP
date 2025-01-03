@@ -11,14 +11,36 @@ import com.example.jimenez_lozano_ruben_imdbapp.models.Movies;
 import java.util.ArrayList;
 import java.util.List;
 
+
+/**
+ * Clase que gestiona las operaciones relacionadas con la lista de favoritos de los usuarios.
+ * implementamos metodos para agregar, eliminar y recuperar películas favoritas desde la base de datos.
+ */
 public class FavoritesManager {
 
+    // Declaramos el helper de la base de datos
     private FavoritesDatabaseHelper dbHelper;
 
+    /**
+     * Constructor que inicializa el gestor de favoritos con el contexto proporcionado.
+     *
+     * @param context El contexto de la aplicación o actividad.
+     */
     public FavoritesManager(Context context) {
         dbHelper = new FavoritesDatabaseHelper(context);
     }
 
+    /**
+     * Agrega una pelicula a la lista de favoritos de la base de datos.
+     * @param id          El ID unico de la pelicula.
+     * @param userEmail   El correo del usuario actual.
+     * @param movieTitle  El titulo de la pelicula.
+     * @param movieImage  La URL de la imagen de la pelicula.
+     * @param releaseDate La fecha de lanzamiento de la pelicula.
+     * @param movieRating La puntuación de la pelicula.
+     * @param overview    La descripción de la pelicula.
+     * @return true si la pelicula se añadio correctamente, false en caso contrario.
+     */
     public boolean addFavorite(String id, String userEmail, String movieTitle, String movieImage, String releaseDate, String movieRating, String overview) {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         ContentValues values = new ContentValues();
@@ -32,16 +54,15 @@ public class FavoritesManager {
 
         long result = db.insert(FavoritesDatabaseHelper.TABLE_NAME, null, values);
         db.close();
-
-        return result != -1; // Retorna true si la inserción fue exitosaosa
+        // Devolvemos true si la inserción fue exitosaosa
+        return result != -1;
     }
 
     /**
-     * Elimina una película de la lista de favoritos de la base de datos.
-     *
+     * MEtodo para eliminar una pelicula de la lista de favoritos de la base de datos.
      * @param userEmail El correo del usuario actual.
-     * @param movieTitle El título de la película a eliminar.
-     * @return true si la película fue eliminada exitosamente, false en caso contrario.
+     * @param movieTitle El titulo de la película a eliminar.
+     * @return true si la pelicula fue eliminada correctamente, false en caso contrario.
      */
     public boolean removeFavorite(String userEmail, String movieTitle) {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
@@ -55,7 +76,12 @@ public class FavoritesManager {
     }
 
 
-
+    /**
+     * Recuperamos mediante un cursor con las peliculas favoritas del usuario desde la base de datos.
+     * Consiguiendo que cada usuario tenga su propia lista de fovirtos
+     * @param userEmail El correo del usuario actual.
+     * @return Un cursor con los registros de las películas favoritas.
+     */
     public Cursor getFavoritesCursor(String userEmail) {
         SQLiteDatabase db = dbHelper.getReadableDatabase();
         return db.query(
@@ -67,7 +93,11 @@ public class FavoritesManager {
         );
     }
 
-
+    /**
+     * Convierte un cursor en una lista de peliculas favoritas.
+     * @param cursor El cursor con los registros de las peliculas favoritas.
+     * @return Una lista de objetos de tipo movies con las peliculas favoritas.
+     */
     public List<Movies> getFavoritesList(Cursor cursor) {
         List<Movies> favoriteMovies = new ArrayList<>();
         if (cursor != null && cursor.moveToFirst()) {

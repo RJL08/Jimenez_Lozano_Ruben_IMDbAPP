@@ -2,6 +2,11 @@ package com.example.jimenez_lozano_ruben_imdbapp.models;
 
 import com.google.gson.annotations.SerializedName;
 
+
+/**
+ * Clase que representa la respuesta detallada de una pelucula desde la API.
+ * Incluye informacion como fecha de lanzamiento, puntuacion, y trama.
+ */
 public class MovieOverviewResponse {
     @SerializedName("data")
     public Data data;
@@ -9,7 +14,9 @@ public class MovieOverviewResponse {
     public Data getData() {
         return data;
     }
-
+    /**
+     * Clase interna que contiene los detalles principales de la pelicula.
+     */
     public static class Data {
         @SerializedName("title")
         public Title title;
@@ -18,7 +25,9 @@ public class MovieOverviewResponse {
             return title;
         }
     }
-
+    /**
+     * Clase interna que representa el titulo y detalles relacionados.
+     */
     public static class Title {
         @SerializedName("releaseDate")
         public ReleaseDate releaseDate;
@@ -41,7 +50,9 @@ public class MovieOverviewResponse {
             return plot;
         }
     }
-
+    /**
+     * Clase interna que representa la fecha de lanzamiento de la pelicula.
+     */
     public static class ReleaseDate {
         @SerializedName("day")
         public Integer day;
@@ -65,6 +76,9 @@ public class MovieOverviewResponse {
         }
     }
 
+    /**
+     * Clase interna que representa el resumen de puntuacion de la pelicula.
+     */
     public static class RatingsSummary {
         @SerializedName("aggregateRating")
         public Double aggregateRating;
@@ -73,7 +87,9 @@ public class MovieOverviewResponse {
             return aggregateRating;
         }
     }
-
+    /**
+     * Clase interna que representa la trama de la pelicula.
+     */
     public static class Plot {
         @SerializedName("plotText")
         public PlotText plotText;
@@ -82,7 +98,9 @@ public class MovieOverviewResponse {
             return plotText;
         }
     }
-
+    /**
+     * Clase interna que representa el texto de la trama de la pelicula.
+     */
     public static class PlotText {
         @SerializedName("plainText")
         public String plainText;

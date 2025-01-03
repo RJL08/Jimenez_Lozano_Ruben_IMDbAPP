@@ -1,45 +1,36 @@
 package com.example.jimenez_lozano_ruben_imdbapp.ui.adapter;
 
-import android.content.Intent;
-import android.graphics.Movie;
+
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.bumptech.glide.Glide;
-import com.example.jimenez_lozano_ruben_imdbapp.MovieDetailsActivity;
 import com.example.jimenez_lozano_ruben_imdbapp.R;
 import com.example.jimenez_lozano_ruben_imdbapp.models.Movies;
-
 import java.util.List;
+
+
+/**
+ * Adaptador personalizado para gestionar y mostrar una lista de peliculas en el RecyclerView.
+ * Permite manejar clics corrtos y clics largos en los elementos de la lista.
+ */
 public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieViewHolder> {
 
 
-    /**
-     * Lista de películas que se mostrarán en el RecyclerView.
-     */
+    //Delcarmos las variables
     private List<Movies> movieList;
-
-    /**
-     * Listener para manejar los clics en cada película.
-     */
     private OnMovieClickListener listener;
-
-    /**
-     * Listener para manejar los eventos de long click para agregar a favoritos.
-     */
     private OnMovieLongClickListener longClickListener;
 
     /**
-     * Constructor para inicializar la lista de películas y los listeners.
+     * Constructor para iniciar la lista de peliculas y los listeners.
      *
-     * @param movieList Lista de películas.
-     * @param listener Listener para clics normales.
+     * @param movieList Lista de peliculas.
+     * @param listener Listener para clics cortos.
      * @param longClickListener Listener para clics largos.
      */
     public MovieAdapter(List<Movies> movieList, OnMovieClickListener listener, OnMovieLongClickListener longClickListener) {
@@ -62,22 +53,22 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieViewHol
     @NonNull
     @Override
     public MovieViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        // Inflar el diseño de cada elemento de la lista desde el archivo XML
+        // Inflamos el diseño de cada elemento de la lista desde el archivo XML
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_moive, parent, false);
         return new MovieViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull MovieViewHolder holder, int position) {
-        // Obtener la película actual de la lista
+        // Obtenemos la pelicula actual de la lista
         Movies movie = movieList.get(position);
-        // Enlazar los datos de la película con el ViewHolder
+        // Enlazamos los datos de la pelicula con el ViewHolder
         holder.bind(movie, listener, longClickListener);
     }
 
     @Override
     public int getItemCount() {
-        // Devolver el tamaño de la lista de películas
+        // Devolvemos el tamaño de la lista de peliculas
         return movieList.size();
     }
 
@@ -85,19 +76,13 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieViewHol
      * ViewHolder para representar cada película en el RecyclerView.
      */
     public static class MovieViewHolder extends RecyclerView.ViewHolder {
-        /**
-         * Vista para mostrar la imagen de la película.
-         */
-        private ImageView movieImage;
 
-        /**
-         * Vista para mostrar el título de la película.
-         */
+        //Declaramos las variables
+        private ImageView movieImage;
         private TextView movieTitle;
 
         /**
-         * Constructor del ViewHolder para inicializar las vistas.
-         *
+         * Constructor del ViewHolder para iniciar las vistas.
          * @param itemView Vista del elemento del RecyclerView.
          */
         public MovieViewHolder(@NonNull View itemView) {
@@ -108,24 +93,23 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieViewHol
         }
 
         /**
-         * Método para enlazar los datos de la película y los listeners a las vistas.
-         *
-         * @param movie Película a mostrar.
-         * @param listener Listener para clics normales.
+         * Metodo para enlazar los datos de la pelicula y los listeners a las vistas.
+         * @param movie Pelicula a mostrar.
+         * @param listener Listener para clics cortos.
          * @param longClickListener Listener para clics largos.
          */
         public void bind(Movies movie, OnMovieClickListener listener, OnMovieLongClickListener longClickListener) {
-            // Establecer el título de la película*************
+            // Establecemos el título de la pelicula
             movieTitle.setText(movie.getTitle() != null ? movie.getTitle() : "Título no disponible");
 
 
-            // Cargar la imagen de la película usando Glide
+            // Cargamos la imagen de la pelicula usando Glide
             Glide.with(itemView.getContext())
                     .load(movie.getImageUrl())
                     .placeholder(R.drawable.esperando)
                     .into(movieImage);
 
-            // Configurar el listener para clics normales************
+            // Configuramos el listener para clics cortos
             itemView.setOnClickListener(v -> {
                 if (listener != null) {
                     listener.onMovieClick(movie);
@@ -133,7 +117,7 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieViewHol
             });
 
 
-            // Configurar el listener para clics largos
+            // Configuramos el listener para clics largos
             itemView.setOnLongClickListener(v -> {
                 longClickListener.onMovieLongClick(movie);
                 return true; // Indicar que el evento fue manejado

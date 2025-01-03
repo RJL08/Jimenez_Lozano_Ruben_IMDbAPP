@@ -1,10 +1,15 @@
 package com.example.jimenez_lozano_ruben_imdbapp.models;
 
-import android.graphics.Movie;
+
 
 import com.google.gson.annotations.SerializedName;
 import java.util.List;
 
+
+/**
+ * Clase que representa la respuesta de búsqueda de películas desde la API de TMDB.
+ * Contiene información sobre la pagina actual, los resultados, y el total de paginas y resultados.
+ */
 public class MovieSearchResponse {
     @SerializedName("page")
     private int page;
@@ -20,7 +25,7 @@ public class MovieSearchResponse {
 
 
 
-    // Constructor vacío
+    // Constructor sin parametros
     public MovieSearchResponse() {
     }
 

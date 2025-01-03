@@ -14,9 +14,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-
 import android.widget.Toast;
-
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
@@ -36,43 +34,49 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
+
+
+
 public class GalleryFragment extends Fragment {
+    //Declaramos las variables
     private FragmentGalleryBinding binding; // Para usar ViewBinding
     private RecyclerView recyclerView; // RecyclerView para mostrar los favoritos
     private FavoritesAdapter adapter; // Adaptador personalizado
-    private List<Movies> favoriteList = new ArrayList<>(); // Lista de películas favoritas
+    private List<Movies> favoriteList = new ArrayList<>(); // Lista de peliculas de favoritas
     private FavoritesManager favoritesManager; // Gestor de favoritos
 
 
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        // Inicializar el ViewModel (ya existente)
+        // Inicializamos el ViewModel
         GalleryViewModel galleryViewModel = new ViewModelProvider(this).get(GalleryViewModel.class);
 
-        // Inflar el diseño usando ViewBinding
+        // Inflamos el diseño usando ViewBinding
         binding = FragmentGalleryBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
-        // Configurar el RecyclerView
-        recyclerView = binding.recyclerViewFavorites; // Asegúrate de que ID coincide con tu XML
-        recyclerView.setLayoutManager(new LinearLayoutManager(getContext())); // Lista vertical
-        adapter = new FavoritesAdapter(requireContext(), favoriteList); // Crear el adaptador
-        recyclerView.setAdapter(adapter); // Vincular el adaptador al RecyclerView
+        // Configuramos el RecyclerView
+        recyclerView = binding.recyclerViewFavorites;
+        // Lista vertical de elementos
+        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+        adapter = new FavoritesAdapter(requireContext(), favoriteList);
+        // Vinculamos el adaptador al RecyclerView
+        recyclerView.setAdapter(adapter);
 
-        // Inicializar el FavoritesManager
+        // Inicializamos el FavoritesManager
         favoritesManager = new FavoritesManager(requireContext());
 
-        // Cargar favoritos desde la base de datos
+        // Cargamos los favoritos desde la base de datos
         loadFavorites();
 
 
-        // Configurar el botón de compartir
+        // Configuramos el boton de compartir
         Button shareButton = binding.shareButton;
         shareButton.setOnClickListener(v -> {
-            // Solicitar permisos antes de compartir
+            // Solicitamos los permisos antes de compartir
             requestBluetoothPermission();
-            // Compartir favoritos
+            // Compartimos favoritos
             shareFavoritesAsJSON();
         });
 
@@ -82,7 +86,9 @@ public class GalleryFragment extends Fragment {
     }
 
 
-
+    /**
+     * lanzador para manejar los permisos relacionados con bluetooth.
+     */
     private final ActivityResultLauncher<String[]> bluetoothPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
                 Boolean isBluetoothConnectGranted = result.getOrDefault(Manifest.permission.BLUETOOTH_CONNECT, false);
@@ -97,12 +103,15 @@ public class GalleryFragment extends Fragment {
                 }
             });
 
+    /**
+     * mostramos un cuadro de dialogo cuando se niegan los permisos necesarios.
+     */
     private void showPermissionDeniedDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
         builder.setTitle("Permisos necesarios")
                 .setMessage("Esta funcionalidad requiere acceso a Bluetooth y ubicación para compartir tus películas favoritas. Por favor, otorga los permisos desde la configuración de la aplicación.")
                 .setPositiveButton("Configurar", (dialog, which) -> {
-                    // Redirigir a la configuración de la aplicación
+                    // Redirigimos a la configuración de la aplicacion
                     Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
                     Uri uri = Uri.fromParts("package", requireContext().getPackageName(), null);
                     intent.setData(uri);
@@ -113,15 +122,18 @@ public class GalleryFragment extends Fragment {
                 .show();
     }
 
+    /**
+     * solicitamos los permisos necesarios para usar bluetooth.
+     */
     private void requestBluetoothPermission() {
-
+            // Verificar si los permisos ya estan concedidos
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 if (shouldShowRequestPermissionRationale(Manifest.permission.BLUETOOTH_CONNECT) ||
                         shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)) {
-                    // Mostrar la alerta explicando la importancia de los permisos
+                    // Mostramos la alerta explicando la importancia de los permisos
                     showPermissionDeniedDialog();
                 } else {
-                    // Solicitar permisos normalmente
+                    // Solicitamos los permisos normalmente
                     bluetoothPermissionLauncher.launch(new String[]{
                             Manifest.permission.BLUETOOTH_CONNECT,
                             Manifest.permission.ACCESS_FINE_LOCATION
@@ -133,7 +145,8 @@ public class GalleryFragment extends Fragment {
         }
 
     /**
-     * Convierte la lista de favoritos a JSON y permite compartirla.
+     * Convierte la lista de favoritos a JSON y permite compartirla,
+     * mostrandolo en cuadro de dialogo como JSON
      */
     private void shareFavoritesAsJSON() {
         if (favoriteList.isEmpty()) {
@@ -141,7 +154,9 @@ public class GalleryFragment extends Fragment {
             return;
         }
 
+        // Convertimos la lista de favoritos a JSON
         JSONArray jsonArray = new JSONArray();
+        // Recorremos la lista de favoritos
         for (Movies movie : favoriteList) {
             try {
                 JSONObject jsonMovie = new JSONObject();
@@ -157,8 +172,9 @@ public class GalleryFragment extends Fragment {
                 Log.e("GalleryFragment", "Error al crear JSON: " + e.getMessage());
             }
         }
-
+        // Convertimos el JSONArray a una cadena
         String jsonString = jsonArray.toString();
+        // Reemplazamos las barras diagonales con barras normales
         jsonString = jsonString.replace("\\/", "/");
 
         AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
@@ -175,10 +191,10 @@ public class GalleryFragment extends Fragment {
 
 
     /**
-     * Método para cargar los favoritos desde la base de datos.
+     * Metodo para cargar los favoritos desde la base de datos.
      */
     private void loadFavorites() {
-        // Obtener el correo del usuario actual desde SharedPreferences
+        // Obtenemos el correo del usuario actual desde SharedPreferences
         SharedPreferences prefs = requireContext().getSharedPreferences("MyAppPrefs", Context.MODE_PRIVATE);
         String userEmail = prefs.getString("userEmail", ""); // Obtiene el correo del usuario actual
 
@@ -188,9 +204,9 @@ public class GalleryFragment extends Fragment {
             return;
         }
 
-        // Cargar favoritos del usuario
+        // Cargamos favoritos del usuario
         Cursor cursor = favoritesManager.getFavoritesCursor(userEmail);
-
+        // Si hay favoritos cargados los agregamos a la lista y notificamos al adaptador los cambios
         if (cursor != null && cursor.getCount() > 0) {
             favoriteList.clear();
             favoriteList.addAll(favoritesManager.getFavoritesList(cursor));
@@ -205,12 +221,14 @@ public class GalleryFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        loadFavorites(); // Recargar favoritos al reanudar el fragmento
+        // Recargamos favoritos al reanudar el fragmento
+        loadFavorites();
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        binding = null; // Liberar el binding al destruir la vista
+        // Liberamos el binding al destruir la vista
+        binding = null;
     }
 }

@@ -3,23 +3,30 @@ package com.example.jimenez_lozano_ruben_imdbapp.models;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+
+
+/**
+ * Clase que representa una pelicula con atributos clave como titulo, puntuación y descripción.
+ * Implementa Parcelable para facilitar la transferencia de objetos entre actividades.
+ */
 public class Movies implements Parcelable {
-    // Atributos existentes
+    // Declaramos los atributos
     private String id;          // ID de la película
     private String title;       // Título
     private String imageUrl;    // URL de la imagen
     private String releaseYear; // Año de lanzamiento
-    private String rating;      // Puntuación de la película
+    private String rating;      // Puntuación de la pelicula
+    private String overview;    // Resumen de la pelicula
+    private String genreId;     // ID del genero para busquedas por genero
 
-    // Nuevos atributos para la nueva API
-    private String overview;    // Resumen de la película
-    private String genreId;     // ID del género para búsquedas por género
-
-    // Constructor vacío
+    // Constructor sin parametros
     public Movies() {
     }
 
-    // Constructor Parcel existente
+    /**
+     * Constructor que inicializa un objeto de pelicula a partir de un Parcel.
+     * @param in El objeto Parcel desde el que se inicializan los atributos.
+     */
     protected Movies(Parcel in) {
         id = in.readString();
         title = in.readString();
@@ -30,7 +37,9 @@ public class Movies implements Parcelable {
         genreId = in.readString();  // Leer el nuevo campo 'genreId'
     }
 
-    // CREATOR para los parcelables
+    /**
+     * CREATOR para la clase Movies, necesario para implementar el Parcelable.
+     */
     public static final Creator<Movies> CREATOR = new Creator<Movies>() {
         @Override
         public Movies createFromParcel(Parcel in) {
@@ -43,7 +52,11 @@ public class Movies implements Parcelable {
         }
     };
 
-    // Métodos Parcelables existentes, extendidos con los nuevos campos
+    /**
+     * Escribimos los datos de la pelicula en un Parcel.
+     * @param dest  El Parcel donde se escribirán los datos.
+     * @param flags Flags adicionales sobre cómo escribir el objeto.
+     */
     @Override
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeString(id);
@@ -51,10 +64,14 @@ public class Movies implements Parcelable {
         dest.writeString(imageUrl);
         dest.writeString(releaseYear);
         dest.writeString(rating);
-        dest.writeString(overview); // Escribir el nuevo campo 'overview'
-        dest.writeString(genreId);  // Escribir el nuevo campo 'genreId'
+        dest.writeString(overview);
+        dest.writeString(genreId);
     }
 
+    /**
+     * Describe el contenido del objeto Parcelable.
+     * @return Un entero que representa el tipo de objeto.
+     */
     @Override
     public int describeContents() {
         return 0;
@@ -101,7 +118,7 @@ public class Movies implements Parcelable {
         this.rating = rating;
     }
 
-    // Nuevos Getters y Setters
+
     public String getOverview() {
         return overview;
     }
