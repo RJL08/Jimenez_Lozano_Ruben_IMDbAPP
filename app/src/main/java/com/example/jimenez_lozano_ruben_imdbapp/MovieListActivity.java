@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.jimenez_lozano_ruben_imdbapp.database.FavoritesManager;
@@ -38,7 +39,7 @@ public class MovieListActivity extends AppCompatActivity {
 
         // Inicializamos el RecyclerView
         moviesRecyclerView = findViewById(R.id.moviesRecyclerView);
-        moviesRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        moviesRecyclerView.setLayoutManager(new GridLayoutManager(this, 2));
 
         // Obtenemos la lista de películas desde el Intent
         Intent intent = getIntent();
