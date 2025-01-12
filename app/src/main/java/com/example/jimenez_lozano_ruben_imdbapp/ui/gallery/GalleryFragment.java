@@ -76,7 +76,7 @@ public class GalleryFragment extends Fragment {
             // Solicitamos los permisos antes de compartir
             requestBluetoothPermission();
             // Compartimos favoritos
-            shareFavoritesAsJSON();
+            //shareFavoritesAsJSON();
         });
 
         return root;
@@ -94,6 +94,7 @@ public class GalleryFragment extends Fragment {
                 if (isBluetoothConnectGranted != null && isBluetoothConnectGranted &&
                         isLocationGranted != null && isLocationGranted) {
                     Toast.makeText(getContext(), "Permisos de Bluetooth concedidos.", Toast.LENGTH_SHORT).show();
+                    shareFavoritesAsJSON();
                 } else {
                     Toast.makeText(getContext(), "Permisos de Bluetooth denegados.", Toast.LENGTH_SHORT).show();
                     showPermissionDeniedDialog();
