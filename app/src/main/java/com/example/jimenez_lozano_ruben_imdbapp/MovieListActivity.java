@@ -49,8 +49,6 @@ public class MovieListActivity extends AppCompatActivity {
             moviesList = new ArrayList<>();
         }
 
-
-
         /*
          * Configuramos el adaptador para gestionar la lista de películas.
          * Implementamos la logica para abrir detalles de una pelicula al hacer clic

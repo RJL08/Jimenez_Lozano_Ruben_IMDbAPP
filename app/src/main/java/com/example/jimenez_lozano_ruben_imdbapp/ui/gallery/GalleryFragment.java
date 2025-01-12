@@ -70,7 +70,6 @@ public class GalleryFragment extends Fragment {
         // Cargamos los favoritos desde la base de datos
         loadFavorites();
 
-
         // Configuramos el boton de compartir
         Button shareButton = binding.shareButton;
         shareButton.setOnClickListener(v -> {
@@ -79,8 +78,6 @@ public class GalleryFragment extends Fragment {
             // Compartimos favoritos
             shareFavoritesAsJSON();
         });
-
-
 
         return root;
     }
@@ -109,7 +106,8 @@ public class GalleryFragment extends Fragment {
     private void showPermissionDeniedDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
         builder.setTitle("Permisos necesarios")
-                .setMessage("Esta funcionalidad requiere acceso a Bluetooth y ubicación para compartir tus películas favoritas. Por favor, otorga los permisos desde la configuración de la aplicación.")
+                .setMessage("Para compartir se requiere acceso a Bluetooth y ubicación para compartir tus películas favoritas. " +
+                        "Por favor, otorga los permisos desde la configuración de la aplicación.")
                 .setPositiveButton("Configurar", (dialog, which) -> {
                     // Redirigimos a la configuración de la aplicacion
                     Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
@@ -153,7 +151,6 @@ public class GalleryFragment extends Fragment {
             Toast.makeText(getContext(), "No hay favoritos para compartir.", Toast.LENGTH_SHORT).show();
             return;
         }
-
         // Convertimos la lista de favoritos a JSON
         JSONArray jsonArray = new JSONArray();
         // Recorremos la lista de favoritos

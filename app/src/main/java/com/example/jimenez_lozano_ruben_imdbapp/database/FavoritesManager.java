@@ -41,7 +41,9 @@ public class FavoritesManager {
      * @param overview    La descripción de la pelicula.
      * @return true si la pelicula se añadio correctamente, false en caso contrario.
      */
-    public boolean addFavorite(String id, String userEmail, String movieTitle, String movieImage, String releaseDate, String movieRating, String overview) {
+    public boolean addFavorite(String id, String userEmail, String movieTitle, String movieImage, String releaseDate,
+                               String movieRating, String overview) {
+
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put(FavoritesDatabaseHelper.COLUMN_ID, id);

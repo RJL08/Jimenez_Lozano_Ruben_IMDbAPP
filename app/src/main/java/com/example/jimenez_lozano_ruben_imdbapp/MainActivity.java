@@ -24,6 +24,8 @@ import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 import com.example.jimenez_lozano_ruben_imdbapp.databinding.ActivityMainBinding;
+import com.squareup.picasso.Picasso;
+
 @SuppressWarnings("deprecation")
 
 
@@ -89,14 +91,20 @@ public class MainActivity extends AppCompatActivity {
             Log.d("MainActivity", "User Email: " + userEmail);
         }
 
-        if (userPhotoUrl != null) {
+        // Si userPhotoUrl es null, lo recuperamos desde SharedPreferences
+        if (userPhotoUrl == null || userPhotoUrl.isEmpty()) {
+            SharedPreferences prefs = getSharedPreferences("MyAppPrefs", MODE_PRIVATE);
+            userPhotoUrl = prefs.getString("userPhoto", "https://lh3.googleusercontent.com/a/default-user");
+
+        }
+
             // Usar Glide para cargar la imagen del usuario en el ImageView
-            Glide.with(this)
+        Picasso.get()
                     .load(userPhotoUrl)
                     .placeholder(R.drawable.ic_launcher_background) // Imagen por defecto
                     .error(R.drawable.ic_launcher_foreground) // Imagen de error
                     .into(profileImageView);
-        }
+
         // Configuramos el boton de logout para cerrar sesion
         logoutButton.setOnClickListener(v -> {
             // Limpiamos el estado de inicio de sesión en SharedPreferences

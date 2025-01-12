@@ -3,6 +3,8 @@ package com.example.jimenez_lozano_ruben_imdbapp;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -42,12 +44,17 @@ public class SigninActivity extends AppCompatActivity {
         boolean isLoggedIn = prefs.getBoolean("isLoggedIn", false);
 
         if (isLoggedIn) {
-            // Navegamos directamente al MainActivity
-            navigateToMainActivity(
-                    prefs.getString("userName", ""),
-                    prefs.getString("userEmail", ""),
-                    prefs.getString("userPhoto", "https://lh3.googleusercontent.com/a/default-user")
-            );
+            // Recuperamos la foto del usuario desde SharedPreferences
+            String userPhoto = prefs.getString("userPhoto", "https://lh3.googleusercontent.com/a/default-user");
+            // Si el usuario ya está registrado, navegamos a MainActivity
+            new Handler(Looper.getMainLooper()).post(() -> {
+                navigateToMainActivity(
+                        prefs.getString("userName", ""),
+                        prefs.getString("userEmail", ""),
+                        userPhoto
+                );
+                finish();
+            });
             return;
         }
 
@@ -65,7 +72,9 @@ public class SigninActivity extends AppCompatActivity {
         }
 
         // Configuramos Firebase Auth
-        firebaseAuth = FirebaseAuth.getInstance();
+        new Handler(Looper.getMainLooper()).post(() -> {
+            firebaseAuth = FirebaseAuth.getInstance();
+        });
 
         // Configuramos el ActivityResultLauncher para el resultado del SignIn de Google
         signInLauncher = registerForActivityResult(
@@ -144,15 +153,18 @@ public class SigninActivity extends AppCompatActivity {
      * @param user usuario autenticado en firebase
      */
     private void saveUserDataToPreferences(FirebaseUser user) {
+        String photoUrl = user.getPhotoUrl() != null ? user.getPhotoUrl().toString() : "https://lh3.googleusercontent.com/a/default-user";
         // Guardamos los datos del usuario en SharedPreferences
         SharedPreferences.Editor editor = getSharedPreferences("MyAppPrefs", MODE_PRIVATE).edit();
         editor.putBoolean("isLoggedIn", true);
         editor.putString("userName", user.getDisplayName());
         editor.putString("userEmail", user.getEmail());
         // Si no hay foto de perfil, usamos una URL por defecto para evitar errores
-        editor.putString("userPhoto", user.getPhotoUrl() != null
-                ? user.getPhotoUrl().toString()
-                : "https://lh3.googleusercontent.com/a/default-user");
+        editor.putString("userPhoto",photoUrl );
+
+        //editor.putString("userPhoto", user.getPhotoUrl() != null
+               // ? user.getPhotoUrl().toString()
+               // : "https://lh3.googleusercontent.com/a/default-user");
         editor.apply();
     }
 
