@@ -102,7 +102,7 @@ public class GalleryFragment extends Fragment {
             });
 
     /**
-     * mostramos un cuadro de dialogo cuando se niegan los permisos necesarios.
+     * mostramos un cuadro de dialogo cuando se niegan los permisos necesarios para compartir.
      */
     private void showPermissionDeniedDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
