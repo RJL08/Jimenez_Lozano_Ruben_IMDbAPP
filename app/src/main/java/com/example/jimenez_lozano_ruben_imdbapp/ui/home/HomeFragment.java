@@ -214,6 +214,7 @@ public class HomeFragment extends Fragment {
 
       Call<MovieOverviewResponse> call = apiService.getMovieOverview(
               movie.getId(),
+              // CLAVE API DE RESPALDO :cb2c7cc95cmsh29ce53fe16403a4p10aee0jsn342403956b33
               "8c8a3cbdefmsh5b39dc7ade88a71p1ca1bdjsn245a12339ee4", // Clave API
               "imdb-com.p.rapidapi.com"
       );
@@ -279,6 +280,7 @@ public class HomeFragment extends Fragment {
 
         Call<MovieOverviewResponse> call = apiService.getMovieOverview(
                 movie.getId(),
+                // CLAVE API DE RESPALDO :cb2c7cc95cmsh29ce53fe16403a4p10aee0jsn342403956b33
                 "8c8a3cbdefmsh5b39dc7ade88a71p1ca1bdjsn245a12339ee4", // Clave API
                 "imdb-com.p.rapidapi.com"
         );

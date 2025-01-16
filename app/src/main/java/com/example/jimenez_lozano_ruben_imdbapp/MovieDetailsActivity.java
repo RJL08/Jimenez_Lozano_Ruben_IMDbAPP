@@ -139,6 +139,7 @@ public class MovieDetailsActivity extends AppCompatActivity {
                 // Construir la URL de la API con el ID de la película proporcionado
                 String url = "https://imdb-com.p.rapidapi.com/title/get-overview?tconst=" + movieId;
                 client.prepare("GET", url)
+                        // CLAVE API DE RESPALDO :cb2c7cc95cmsh29ce53fe16403a4p10aee0jsn342403956b33
                         .setHeader("x-rapidapi-key", "8c8a3cbdefmsh5b39dc7ade88a71p1ca1bdjsn245a12339ee4")
                         .setHeader("x-rapidapi-host", "imdb-com.p.rapidapi.com")
                         .execute()
